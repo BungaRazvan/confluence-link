@@ -9,6 +9,7 @@ import {
 import { Obs2ConFluxSettingsTab } from "lib/settings";
 import { Obs2ConFluxSettings } from "lib/confluence/types";
 import ConfluenceClient from "lib/confluence/client";
+import PropertiesAdaptor from "lib/adaptors/properties";
 
 export default class Obs2ConFluxPlugin extends Plugin {
 	settings: Obs2ConFluxSettings;
@@ -21,9 +22,7 @@ export default class Obs2ConFluxPlugin extends Plugin {
 		const ribbonIconEl = this.addRibbonIcon(
 			"file-up",
 			"Upload file to confluence",
-			(evt: MouseEvent) => {
-				console.log(evt);
-			}
+			(evt: MouseEvent) => {}
 		);
 
 		// Register commands
@@ -39,10 +38,9 @@ export default class Obs2ConFluxPlugin extends Plugin {
 					throw new Error("Not a TFile");
 				}
 
+				console.log(ctx);
+
 				const fileData = await this.app.vault.read(file);
-
-				// this.app.vault.modify(file, fileData + "\nhello");
-
 				const client = new ConfluenceClient({
 					host: this.settings.confluenceDomain,
 					authentication: {
@@ -50,12 +48,20 @@ export default class Obs2ConFluxPlugin extends Plugin {
 						apiToken: this.settings.atlassianApiToken,
 					},
 				});
-				console.log(file.name);
+				const props = new PropertiesAdaptor()
+					.loadProperties(fileData)
+					.addProperties({
+						test5: undefined,
+						tes56: "hey",
+					});
 
-				client.page.createPage({
-					spaceId: 1376263,
-					pageTitle: file.name,
-				});
+				// Write the updated content back to the Obsidian file
+				await this.app.vault.modify(file, props.toFile(fileData));
+
+				// client.page.createPage({
+				// 	spaceId: 1376263,
+				// 	pageTitle: file.name,
+				// });
 			},
 		});
 	}
@@ -68,34 +74,5 @@ export default class Obs2ConFluxPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-
-	async loadMarkdownFile(absoluteFilePath: string): Promise<MarkdownFile> {
-		const file = this.app.vault.getAbstractFileByPath(absoluteFilePath);
-		if (!(file instanceof TFile)) {
-			throw new Error("Not a TFile");
-		}
-
-		const fileFM = this.metadataCache.getCache(file.path);
-		if (!fileFM) {
-			throw new Error("Missing File in Metadata Cache");
-		}
-		const frontMatter = fileFM.frontmatter;
-
-		const parsedFrontMatter: Record<string, unknown> = {};
-		if (frontMatter) {
-			for (const [key, value] of Object.entries(frontMatter)) {
-				parsedFrontMatter[key] = value;
-			}
-		}
-
-		return {
-			pageTitle: file.basename,
-			folderName: file.parent.name,
-			absoluteFilePath: file.path,
-			fileName: file.name,
-			contents: await this.vault.cachedRead(file),
-			frontmatter: parsedFrontMatter,
-		};
 	}
 }
