@@ -44,4 +44,13 @@ export class Page {
 
 		return await this.client.sendRequest(config);
 	}
+
+	async getPages() {
+		const config: RequestConfig = {
+			url: "api/v2/pages",
+			method: "GET",
+		};
+
+		return await this.client.sendRequest(config);
+	}
 }
