@@ -12,3 +12,21 @@ export type SearchByCQL = {
 	sitePermissionTypeFilter?: string;
 	expand?: string;
 };
+
+export type CreatePage = {
+	spaceId: number;
+	pageTitle: string;
+	parentId?: number;
+};
+
+export type UpdatePage = {
+	pageId: number;
+	pageTitle: string;
+	spaceId?: number;
+	parentId?: number;
+	ownerId?: number;
+};
+
+export type GetPageById = {
+	pageId: number;
+};

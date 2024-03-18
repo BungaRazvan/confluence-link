@@ -2,6 +2,7 @@ import {
 	Editor,
 	MarkdownEditView,
 	MarkdownView,
+	Notice,
 	Plugin,
 	TFile,
 } from "obsidian";
@@ -10,6 +11,8 @@ import { Obs2ConFluxSettingsTab } from "lib/settings";
 import { Obs2ConFluxSettings } from "lib/confluence/types";
 import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "lib/adaptors/properties";
+import FileAdaptor from "lib/adaptors/file";
+import SpaceSearchModal from "lib/modal";
 
 export default class Obs2ConFluxPlugin extends Plugin {
 	settings: Obs2ConFluxSettings;
@@ -30,6 +33,24 @@ export default class Obs2ConFluxPlugin extends Plugin {
 			id: "upload-file-to-confluence",
 			name: "Upload file to confluence",
 			editorCallback: async (editor: Editor, ctx: MarkdownView) => {
+				const {
+					atlassianUsername,
+					atlassianApiToken,
+					confluenceDomain,
+					confluenceDefaultSpaceId,
+				} = this.settings;
+
+				if (
+					!atlassianApiToken ||
+					!atlassianUsername ||
+					!confluenceDomain
+				) {
+					new Notice(
+						"Settings not set up. Please open the settings page of the plugin"
+					);
+					return;
+				}
+
 				const file = this.app.vault.getAbstractFileByPath(
 					ctx.file?.path || ""
 				);
@@ -38,30 +59,51 @@ export default class Obs2ConFluxPlugin extends Plugin {
 					throw new Error("Not a TFile");
 				}
 
-				console.log(ctx);
-
 				const fileData = await this.app.vault.read(file);
 				const client = new ConfluenceClient({
-					host: this.settings.confluenceDomain,
+					host: confluenceDomain,
 					authentication: {
-						email: this.settings.atlassianUsername,
-						apiToken: this.settings.atlassianApiToken,
+						email: atlassianUsername,
+						apiToken: atlassianApiToken,
 					},
 				});
-				const props = new PropertiesAdaptor()
-					.loadProperties(fileData)
-					.addProperties({
-						test5: undefined,
-						tes56: "hey",
+				const props = new PropertiesAdaptor().loadProperties(fileData);
+
+				let { pageId } = props.properties;
+				let response = null;
+				let spaceId = confluenceDefaultSpaceId || null;
+
+				if (!spaceId && !pageId) {
+					await new Promise<void>((resolve) => {
+						new SpaceSearchModal(this.app, client, (result) => {
+							spaceId = result.id;
+							resolve();
+						}).open();
 					});
+				}
+				const adf = new FileAdaptor().convertObs2Adf(fileData);
+
+				if (!pageId) {
+					response = await client.page.createPage({
+						spaceId: Number(spaceId),
+						pageTitle: file.name,
+					});
+				} else {
+					response = await client.page.updatePage({
+						pageId: Number(pageId),
+						pageTitle: file.name,
+						adf,
+					});
+				}
+
+				props.addProperties({
+					pageId: response.id,
+					spaceId: response.spaceId,
+					confluenceUrl: response._links.base + response._links.webui,
+				});
 
 				// Write the updated content back to the Obsidian file
 				await this.app.vault.modify(file, props.toFile(fileData));
-
-				// client.page.createPage({
-				// 	spaceId: 1376263,
-				// 	pageTitle: file.name,
-				// });
 			},
 		});
 	}
