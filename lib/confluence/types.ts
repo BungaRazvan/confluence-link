@@ -2,6 +2,7 @@ export interface Obs2ConFluxSettings {
 	confluenceDomain: string;
 	atlassianUsername: string;
 	atlassianApiToken: string;
+	confluenceDefaultSpaceId: string;
 }
 
 export interface Config {

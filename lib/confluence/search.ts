@@ -4,7 +4,7 @@ import { SearchByCQL } from "./parameters";
 export class Search {
 	constructor(private client: Client) {}
 
-	async searchByCQL(parameters: SearchByCQL) {
+	async searchByCQL(parameters: SearchByCQL): Promise<object> {
 		const config: RequestConfig = {
 			url: "rest/api/search",
 			method: "GET",
@@ -24,6 +24,6 @@ export class Search {
 			},
 		};
 
-		return await this.client.sendRequest(config);
+		return (await this.client.sendRequest(config)) as object;
 	}
 }

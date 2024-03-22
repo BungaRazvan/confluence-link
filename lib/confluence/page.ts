@@ -1,10 +1,10 @@
 import { Client, RequestConfig } from "./types";
-import { SearchByCQL } from "./parameters";
+import { CreatePage, UpdatePage, GetPageById } from "./parameters";
 
 export class Page {
 	constructor(private client: Client) {}
 
-	async createPage(parameters) {
+	async createPage(parameters: CreatePage) {
 		const config: RequestConfig = {
 			url: "api/v2/pages",
 			method: "POST",
@@ -19,7 +19,20 @@ export class Page {
 		return await this.client.sendRequest(config);
 	}
 
-	async updatePage(parameters) {
+	async updatePage(parameters: UpdatePage) {
+		const pageResponse = await this.getPageById({
+			pageId: parameters.pageId,
+		});
+
+		let adf_body = {
+			version: 1,
+			type: "doc",
+			content: parameters.adf,
+		};
+
+		console.log(adf_body);
+
+		console.log(adf_body);
 		const config: RequestConfig = {
 			url: `api/v2/pages/${parameters.pageId}`,
 			method: "PUT",
@@ -30,13 +43,22 @@ export class Page {
 				parentId: parameters.parentId,
 				spaceId: parameters.spaceId,
 				ownerId: parameters.ownerId,
+				version: {
+					number: pageResponse.version.number + 1,
+					message: `Obsidian update ${new Date().toISOString()}`,
+				},
+				body: {
+					representation: "atlas_doc_format",
+					value: JSON.stringify(adf_body),
+				},
 			},
 		};
 
+		// console.log("here", config);
 		return await this.client.sendRequest(config);
 	}
 
-	async getPageById(parameters) {
+	async getPageById(parameters: GetPageById) {
 		const config: RequestConfig = {
 			url: `api/v2/pages/${parameters.pageId}`,
 			method: "GET",

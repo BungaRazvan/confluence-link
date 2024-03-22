@@ -1,7 +1,9 @@
-import { App, Notice, PluginSettingTab, Setting, requestUrl } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import Obs2ConFluxPlugin from "main";
 
 import ConfluenceClient from "./confluence/client";
+import SpaceSearchModal from "./modal";
+import { isFloat } from "./utils";
 
 export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 	plugin: Obs2ConFluxPlugin;
@@ -95,5 +97,72 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 				button.setDisabled(false);
 			})
 		);
+
+		new Setting(containerEl)
+			.setName("Confluence default space")
+			.setDesc("Default spaceId to save the files")
+			.addExtraButton((button) => {
+				button
+					// .setIcon()
+					.setTooltip("Choose default spaceId")
+					.onClick(() => {
+						const {
+							atlassianUsername,
+							atlassianApiToken,
+							confluenceDomain,
+						} = this.plugin.settings;
+
+						if (
+							!atlassianApiToken ||
+							!atlassianUsername ||
+							!confluenceDomain
+						) {
+							new Notice(
+								"Please set up the above settings first"
+							);
+							return;
+						}
+
+						const client = new ConfluenceClient({
+							host: confluenceDomain,
+							authentication: {
+								email: atlassianUsername,
+								apiToken: atlassianApiToken,
+							},
+						});
+						new SpaceSearchModal(
+							this.app,
+							client,
+							async (result) => {
+								this.plugin.settings.confluenceDefaultSpaceId =
+									result.id;
+								await this.plugin.saveSettings();
+
+								this.display(); // Reload the settings tab
+							}
+						).open();
+					});
+			})
+			.addText((text) => {
+				let wait: NodeJS.Timeout | null = null;
+
+				text.setValue(
+					this.plugin.settings.confluenceDefaultSpaceId
+				).onChange(async (value) => {
+					if (Number(value) && !isFloat(Number(value))) {
+						this.plugin.settings.confluenceDefaultSpaceId = value;
+						await this.plugin.saveSettings();
+					} else {
+						if (wait) {
+							clearTimeout(wait);
+						}
+
+						wait = setTimeout(() => {
+							this.display();
+							new Notice("Please enter a valid space id.");
+						}, 500);
+					}
+				});
+			});
 	}
 }
