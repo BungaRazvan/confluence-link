@@ -1,106 +1,113 @@
 import MarkdownIt from "markdown-it";
 import MarkdownItMarkPlugin from "markdown-it-mark";
 import ADFBuilder from "../builder/adf";
+import { Document, TaskState, Action } from "adf-builder";
+
+function traverse(node, builder) {
+	switch (node.nodeName) {
+		case "H1":
+		case "H2":
+		case "H3":
+		case "H4":
+		case "H5":
+		case "H6":
+			builder.addHeading(Number(node.nodeName[1]), node.textContent);
+			break;
+		case "TABLE":
+			const tableRows = Array.from(node.querySelectorAll("tr"));
+			const tableContent = tableRows.map((row) => {
+				const cells = Array.from(row.querySelectorAll("td, th")).map(
+					(cell) => cell.textContent
+				);
+				return builder.addTableRow(cells).build();
+			});
+			builder.addTable(tableContent);
+			break;
+		case "PRE":
+			const codeElement = node.querySelector("code");
+			if (codeElement) {
+				const codeText = codeElement.textContent || "";
+				builder.addCodeBlock(codeText);
+			}
+			break;
+		case "EM":
+			const emText = node.textContent || "";
+			builder.addEmphasis(emText);
+			break;
+		case "CODE":
+			const codeText = node.textContent || "";
+			builder.addCodeBlock(codeText);
+			break;
+		case "P":
+			const textNodes = Array.from(node.childNodes).filter(
+				(child) => child.nodeType === Node.TEXT_NODE
+			);
+			const text = textNodes
+				.map((textNode) => textNode.textContent)
+				.join("");
+			const inlineElements = Array.from(node.childNodes).filter(
+				(child) => child.nodeType === Node.ELEMENT_NODE
+			);
+			builder.addParagraph(text);
+			inlineElements.forEach((inlineElement) => {
+				console.log(inlineElement);
+				traverse(inlineElement, builder);
+			});
+			break;
+
+		case "OL":
+		case "UL":
+			let isTaskList = false;
+			const listItems = Array.from(node.querySelectorAll("li")).map(
+				(li) => {
+					const isUnCheckedCheckbox = li.textContent
+						.trim()
+						.startsWith("[ ]");
+					const isCheckedCheckbox = li.textContent
+						.trim()
+						.startsWith("[x]");
+
+					const text = li.textContent
+						.replace("[ ]", "")
+						.replace("[x]", "");
+
+					if (isUnCheckedCheckbox || isCheckedCheckbox) {
+						isTaskList = true;
+						return builder.checkboxItem(text, isCheckedCheckbox);
+					}
+
+					return builder.listItem(li.textContent);
+				}
+			);
+			if (isTaskList) {
+				builder.addTaskList(listItems);
+			} else if (node.nodeName === "OL") {
+				builder.addOrderedList(listItems);
+			} else {
+				builder.addBulletList(listItems);
+			}
+			break;
+
+		case "A":
+			const href = node.href || "";
+			const linkText = node.textContent || "";
+			builder.addLink(linkText, href);
+			break;
+		case "BLOCKQUOTE":
+			builder.addBlockquote(node.textContent);
+			break;
+		case "HR":
+			builder.addHorizontalRule();
+			break;
+	}
+}
 
 function htmlToAdf(html) {
 	const builder = new ADFBuilder();
 	const container = document.createElement("div");
 	container.innerHTML = html;
 	container.childNodes.forEach((node: HTMLElement) => {
-		switch (node.nodeName) {
-			case "H1":
-			case "H2":
-			case "H3":
-			case "H4":
-			case "H5":
-			case "H6":
-				builder.addHeading(Number(node.nodeName[1]), node.textContent);
-				break;
-			case "TABLE":
-				const tableRows = Array.from(node.querySelectorAll("tr"));
-				const tableContent = tableRows.map((row) => {
-					const cells = Array.from(
-						row.querySelectorAll("td, th")
-					).map((cell) => cell.textContent);
-					return builder.addTableRow(cells).build();
-				});
-				builder.addTable(tableContent);
-				break;
-			case "PRE":
-				const codeElement = node.querySelector("code");
-				if (codeElement) {
-					const codeText = codeElement.textContent || "";
-					builder.addCodeBlock(codeText);
-				}
-				break;
-			case "EM":
-				const emText = node.textContent || "";
-				builder.addEmphasis(emText);
-				break;
-			case "CODE":
-				const codeText = node.textContent || "";
-				builder.addCodeBlock(codeText);
-				break;
-			case "P":
-				const textNodes = Array.from(node.childNodes).filter(
-					(child) => child.nodeType === Node.TEXT_NODE
-				);
-				const text = textNodes
-					.map((textNode) => textNode.textContent)
-					.join("");
-				const inlineElements = Array.from(node.childNodes).filter(
-					(child) => child.nodeType === Node.ELEMENT_NODE
-				);
-				const inlineMarkup = inlineElements
-					.map((inlineElement) => {
-						switch (inlineElement.nodeName) {
-							case "EM":
-								return builder
-									.addEmphasis(inlineElement.textContent)
-									.build();
-							case "STRONG":
-								return builder
-									.addStrong(inlineElement.textContent)
-									.build();
-							default:
-								return null;
-						}
-					})
-					.filter((markup) => markup !== null);
-				const paragraph = builder.addParagraph(text);
-				inlineMarkup.forEach((markup) => paragraph.addContent(markup));
-				break;
-			case "OL":
-				const orderedListItems = Array.from(
-					node.querySelectorAll("li")
-				).map((li) => {
-					const checkbox = li.textContent.trim().startsWith("[ ]");
-					return checkbox
-						? `- [ ] ${li.textContent.slice(4).trim()}`
-						: `- ${li.textContent.trim()}`;
-				});
-				builder.addOrderedList(orderedListItems);
-				break;
-			case "UL":
-				const bulletListItems = Array.from(
-					node.querySelectorAll("li")
-				).map((li) => {
-					const checkbox = li.textContent.trim().startsWith("[ ]");
-					return checkbox
-						? `- [ ] ${li.textContent.slice(4).trim()}`
-						: `- ${li.textContent.trim()}`;
-				});
-				builder.addBulletList(bulletListItems);
-				break;
-			case "A":
-				const href = node.href || "";
-				const linkText = node.textContent || "";
-				builder.addLink(linkText, href);
-				break;
-			case "BLOCKQUOTE":
-				builder.addBlockquote(node.textContent);
-				break;
-		}
+		traverse(node, builder);
 	});
 	return builder.build();
 }

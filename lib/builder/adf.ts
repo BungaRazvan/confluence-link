@@ -1,6 +1,7 @@
 interface TextElement {
 	type: string;
 	text: string;
+	marks?: [{ type: string }];
 }
 
 interface MarkElement {
@@ -119,6 +120,13 @@ export default class ADFBuilder {
 		return this;
 	}
 
+	addHorizontalRule(): this {
+		this.adf.push({
+			type: "rule",
+		});
+		return this;
+	}
+
 	addParagraph(text?: string): this {
 		const paragraph: ParagraphElement = {
 			type: "paragraph",
@@ -179,7 +187,7 @@ export default class ADFBuilder {
 		const taskList: TaskListItemElement = {
 			type: "taskList",
 			content: taskListItems,
-			attrs: { localId: "", state: "" },
+			attrs: { localId: "Task List" },
 		};
 		this.adf.push(taskList);
 		return this;
@@ -248,6 +256,47 @@ export default class ADFBuilder {
 		};
 		this.adf.push(blockquote);
 		return this;
+	}
+
+	addEmphasis(emText: string) {
+		this.adf.push({
+			type: "text",
+			text: emText,
+			marks: [{ type: "em" }],
+		});
+		return this;
+	}
+
+	listItem(text: string, checkboxType) {
+		return {
+			type: "listItem",
+			content: [
+				{
+					type: "paragraph",
+					content: [
+						{
+							type: "text",
+							text: text.trim(),
+						},
+					],
+				},
+			],
+			attrs: { state: isChecked ? "DONE" : "TODO" },
+		};
+	}
+
+	checkboxItem(text: string, isChecked: boolean) {
+		return {
+			type: "taskItem",
+			attrs: { localId: "Task 1", state: isChecked ? "DONE" : "TODO" },
+			content: [
+				{
+					type: "text",
+					text: text,
+					marks: [],
+				},
+			],
+		};
 	}
 
 	build(): Array<
