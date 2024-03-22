@@ -1,9 +1,13 @@
 import MarkdownIt from "markdown-it";
+// @ts-ignore
 import MarkdownItMarkPlugin from "markdown-it-mark";
-import ADFBuilder from "../builder/adf";
-import { Document, TaskState, Action } from "adf-builder";
 
-function traverse(node, builder) {
+import ADFBuilder from "../builder/adf";
+import { ListItemElement, TaskItemElement } from "lib/builder/types";
+
+function traverse(node: HTMLElement, builder: ADFBuilder) {
+	console.log(node.nodeName, node.parentElement);
+
 	switch (node.nodeName) {
 		case "H1":
 		case "H2":
@@ -11,15 +15,15 @@ function traverse(node, builder) {
 		case "H4":
 		case "H5":
 		case "H6":
-			builder.addHeading(Number(node.nodeName[1]), node.textContent);
+			builder.addHeading(Number(node.nodeName[1]), node.textContent!);
 			break;
 		case "TABLE":
 			const tableRows = Array.from(node.querySelectorAll("tr"));
 			const tableContent = tableRows.map((row) => {
 				const cells = Array.from(row.querySelectorAll("td, th")).map(
-					(cell) => cell.textContent
+					(cell) => cell.textContent!
 				);
-				return builder.addTableRow(cells).build();
+				return builder.addTableRow(cells);
 			});
 			builder.addTable(tableContent);
 			break;
@@ -50,8 +54,7 @@ function traverse(node, builder) {
 			);
 			builder.addParagraph(text);
 			inlineElements.forEach((inlineElement) => {
-				console.log(inlineElement);
-				traverse(inlineElement, builder);
+				traverse(inlineElement as HTMLElement, builder);
 			});
 			break;
 
@@ -60,49 +63,55 @@ function traverse(node, builder) {
 			let isTaskList = false;
 			const listItems = Array.from(node.querySelectorAll("li")).map(
 				(li) => {
-					const isUnCheckedCheckbox = li.textContent
-						.trim()
+					const isUnCheckedCheckbox = li
+						.textContent!.trim()
 						.startsWith("[ ]");
-					const isCheckedCheckbox = li.textContent
-						.trim()
+					const isCheckedCheckbox = li
+						.textContent!.trim()
 						.startsWith("[x]");
 
-					const text = li.textContent
-						.replace("[ ]", "")
+					const text = li
+						.textContent!.replace("[ ]", "")
 						.replace("[x]", "");
 
 					if (isUnCheckedCheckbox || isCheckedCheckbox) {
 						isTaskList = true;
-						return builder.checkboxItem(text, isCheckedCheckbox);
+						return builder.taskItem(text, isCheckedCheckbox);
 					}
 
-					return builder.listItem(li.textContent);
+					return builder.listItem(li.textContent!);
 				}
 			);
 			if (isTaskList) {
-				builder.addTaskList(listItems);
+				builder.addTaskList(listItems as TaskItemElement[]);
+				break;
 			} else if (node.nodeName === "OL") {
-				builder.addOrderedList(listItems);
+				builder.addOrderedList(listItems as ListItemElement[]);
+				break;
 			} else {
-				builder.addBulletList(listItems);
+				builder.addBulletList(listItems as ListItemElement[]);
+				break;
 			}
-			break;
 
 		case "A":
-			const href = node.href || "";
+			const linkEl = node as HTMLAnchorElement;
+			const href = linkEl.href || "";
 			const linkText = node.textContent || "";
 			builder.addLink(linkText, href);
 			break;
 		case "BLOCKQUOTE":
-			builder.addBlockquote(node.textContent);
+			builder.addBlockquote(node.textContent!);
 			break;
 		case "HR":
 			builder.addHorizontalRule();
 			break;
+		case "STRONG":
+			builder.addStrong(node.textContent!);
+			break;
 	}
 }
 
-function htmlToAdf(html) {
+function htmlToAdf(html: string) {
 	const builder = new ADFBuilder();
 	const container = document.createElement("div");
 	container.innerHTML = html;
@@ -112,9 +121,8 @@ function htmlToAdf(html) {
 	return builder.build();
 }
 
-function customEmphasisRule(state, silent) {
+function customEmphasisRule(state: any) {
 	const start = state.pos;
-	const max = state.posMax;
 
 	// Check if the next two characters are asterisks
 	if (

@@ -1,97 +1,22 @@
-interface TextElement {
-	type: string;
-	text: string;
-	marks?: [{ type: string }];
-}
-
-interface MarkElement {
-	type: string;
-}
-
-interface LinkMarkElement extends MarkElement {
-	attrs: {
-		href: string;
-	};
-}
-
-interface ParagraphElement {
-	type: string;
-	content: TextElement[];
-}
-
-interface TableCellElement {
-	type: string;
-	attrs: {
-		background: string;
-		colwidth: any[];
-		colspan: number;
-		rowspan: number;
-	};
-	content: ParagraphElement[];
-}
-
-interface TableRowElement {
-	type: string;
-	content: TableCellElement[];
-}
-
-interface HeadingElement {
-	type: string;
-	content: TextElement[];
-	attrs: {
-		level: number;
-	};
-}
-
-interface TableElement {
-	type: string;
-	content: TableRowElement[];
-}
-
-interface CodeBlockElement {
-	type: string;
-	attrs: {
-		language: string;
-	};
-	content: TextElement[];
-}
-
-interface TaskListItemElement {
-	type: string;
-	content: ParagraphElement[];
-	attrs: {
-		localId: string;
-		state: string;
-	};
-}
-
-interface BulletListItemElement {
-	type: string;
-	content: ParagraphElement[];
-}
-
-interface OrderedListElement {
-	type: string;
-	content: ListItemElement[];
-}
-
-interface LinkElement {
-	type: string;
-	text: string;
-	marks: LinkMarkElement[];
-}
-
-interface BlockquoteElement {
-	type: string;
-	content: ParagraphElement[];
-}
-
-interface ADFNode {
-	type: string;
-	[key: string]: any;
-}
-
-type ListItemElement = BulletListItemElement | OrderedListElement;
+import {
+	TextElement,
+	MarkElement,
+	LinkElement,
+	ParagraphElement,
+	TableCellElement,
+	TableElement,
+	HeadingElement,
+	CodeBlockElement,
+	TaskListItemElement,
+	ListItemElement,
+	BlockquoteElement,
+	TableRowElement,
+	TaskItemElement,
+	ADFNode,
+	RuleElement,
+	BulletListItemElement,
+	OrderedListElement,
+} from "./types";
 
 export default class ADFBuilder {
 	private adf: Array<
@@ -104,6 +29,7 @@ export default class ADFBuilder {
 		| ListItemElement
 		| LinkElement
 		| BlockquoteElement
+		| RuleElement
 	>;
 
 	constructor() {
@@ -145,8 +71,8 @@ export default class ADFBuilder {
 		return this;
 	}
 
-	addTableRow(cells: string[]): this {
-		const tableRow: TableRowElement = {
+	addTableRow(cells: string[]): TableRowElement {
+		const tableRow = {
 			type: "tableRow",
 			content: cells.map((cellText) => ({
 				type: "tableCell",
@@ -169,8 +95,8 @@ export default class ADFBuilder {
 				],
 			})),
 		};
-		this.adf.push(tableRow);
-		return this;
+
+		return tableRow;
 	}
 
 	addCodeBlock(codeText: string): this {
@@ -183,7 +109,7 @@ export default class ADFBuilder {
 		return this;
 	}
 
-	addTaskList(taskListItems: Array<TaskListItemElement>): this {
+	addTaskList(taskListItems: Array<TaskItemElement>): this {
 		const taskList: TaskListItemElement = {
 			type: "taskList",
 			content: taskListItems,
@@ -207,7 +133,7 @@ export default class ADFBuilder {
 		return this;
 	}
 
-	addBulletList(listItems: Array<BulletListItemElement>): this {
+	addBulletList(listItems: Array<ListItemElement>): this {
 		const bulletList: BulletListItemElement = {
 			type: "bulletList",
 			content: listItems,
@@ -216,7 +142,7 @@ export default class ADFBuilder {
 		return this;
 	}
 
-	addOrderedList(listItems: Array<OrderedListElement>): this {
+	addOrderedList(listItems: Array<ListItemElement>): this {
 		const orderedList: OrderedListElement = {
 			type: "orderedList",
 			content: listItems,
@@ -258,7 +184,7 @@ export default class ADFBuilder {
 		return this;
 	}
 
-	addEmphasis(emText: string) {
+	addEmphasis(emText: string): this {
 		this.adf.push({
 			type: "text",
 			text: emText,
@@ -267,7 +193,7 @@ export default class ADFBuilder {
 		return this;
 	}
 
-	listItem(text: string, checkboxType) {
+	listItem(text: string): ListItemElement {
 		return {
 			type: "listItem",
 			content: [
@@ -281,14 +207,13 @@ export default class ADFBuilder {
 					],
 				},
 			],
-			attrs: { state: isChecked ? "DONE" : "TODO" },
 		};
 	}
 
-	checkboxItem(text: string, isChecked: boolean) {
+	taskItem(text: string, isChecked: boolean): TaskItemElement {
 		return {
 			type: "taskItem",
-			attrs: { localId: "Task 1", state: isChecked ? "DONE" : "TODO" },
+			attrs: { localId: text, state: isChecked ? "DONE" : "TODO" },
 			content: [
 				{
 					type: "text",
@@ -309,6 +234,7 @@ export default class ADFBuilder {
 		| ListItemElement
 		| LinkElement
 		| BlockquoteElement
+		| RuleElement
 	> {
 		return this.adf;
 	}

@@ -31,8 +31,6 @@ export class Page {
 		};
 
 		console.log(adf_body);
-
-		console.log(adf_body);
 		const config: RequestConfig = {
 			url: `api/v2/pages/${parameters.pageId}`,
 			method: "PUT",
