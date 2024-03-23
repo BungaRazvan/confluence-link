@@ -1,9 +1,7 @@
 import {
 	TextElement,
-	MarkElement,
 	LinkElement,
 	ParagraphElement,
-	TableCellElement,
 	TableElement,
 	HeadingElement,
 	CodeBlockElement,
@@ -12,25 +10,13 @@ import {
 	BlockquoteElement,
 	TableRowElement,
 	TaskItemElement,
-	ADFNode,
-	RuleElement,
 	BulletListItemElement,
 	OrderedListElement,
+	AdfElement,
 } from "./types";
 
 export default class ADFBuilder {
-	private adf: Array<
-		| HeadingElement
-		| ParagraphElement
-		| TableElement
-		| CodeBlockElement
-		| TextElement
-		| TaskListItemElement
-		| ListItemElement
-		| LinkElement
-		| BlockquoteElement
-		| RuleElement
-	>;
+	private adf: AdfElement;
 
 	constructor() {
 		this.adf = [];
@@ -161,15 +147,6 @@ export default class ADFBuilder {
 		return this;
 	}
 
-	addContent(content: ADFNode | ADFNode[]): this {
-		if (Array.isArray(content)) {
-			this.adf.push(...content);
-		} else {
-			this.adf.push(content);
-		}
-		return this;
-	}
-
 	addBlockquote(blockquoteText: string): this {
 		const blockquote: BlockquoteElement = {
 			type: "blockquote",
@@ -224,18 +201,7 @@ export default class ADFBuilder {
 		};
 	}
 
-	build(): Array<
-		| HeadingElement
-		| ParagraphElement
-		| TableElement
-		| CodeBlockElement
-		| TextElement
-		| TaskListItemElement
-		| ListItemElement
-		| LinkElement
-		| BlockquoteElement
-		| RuleElement
-	> {
+	build(): AdfElement {
 		return this.adf;
 	}
 }

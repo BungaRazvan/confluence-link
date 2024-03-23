@@ -107,3 +107,16 @@ export type ListItemElement = {
 	type: "listItem";
 	content: ParagraphElement[];
 };
+
+export type AdfElement = Array<
+	| HeadingElement
+	| ParagraphElement
+	| TableElement
+	| CodeBlockElement
+	| TextElement
+	| TaskListItemElement
+	| ListItemElement
+	| LinkElement
+	| BlockquoteElement
+	| RuleElement
+>;

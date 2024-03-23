@@ -1,11 +1,4 @@
-import {
-	Editor,
-	MarkdownEditView,
-	MarkdownView,
-	Notice,
-	Plugin,
-	TFile,
-} from "obsidian";
+import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
 
 import { Obs2ConFluxSettingsTab } from "lib/settings";
 import { Obs2ConFluxSettings } from "lib/confluence/types";
@@ -81,7 +74,11 @@ export default class Obs2ConFluxPlugin extends Plugin {
 						}).open();
 					});
 				}
-				const adf = new FileAdaptor().convertObs2Adf(fileData);
+
+				const adf = new FileAdaptor(this.app).convertObs2Adf(
+					fileData,
+					ctx.file?.path || ""
+				);
 
 				if (!pageId) {
 					response = await client.page.createPage({
