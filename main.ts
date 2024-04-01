@@ -21,6 +21,74 @@ export default class Obs2ConFluxPlugin extends Plugin {
 			(evt: MouseEvent) => {}
 		);
 
+		this.addCommand({
+			id: "test-link",
+			name: "test-link",
+			editorCallback: async (editor, ctx) => {
+				const adf = [
+					{
+						type: "paragraph",
+						content: [
+							{
+								type: "text",
+								text: "This is page 1",
+							},
+						],
+					},
+					{
+						type: "paragraph",
+						content: [
+							{
+								type: "text",
+								text: "to ",
+							},
+						],
+					},
+					{
+						type: "text",
+						text: "Page 2",
+						marks: [
+							{
+								type: "link",
+								attrs: {
+									href: "https://razvanbunga.atlassian.net/wiki/spaces/~5f785303b61f66006f163366/pages/5603440/Page+2.md",
+								},
+							},
+						],
+					},
+				];
+
+				const {
+					atlassianUsername,
+					atlassianApiToken,
+					confluenceDomain,
+					confluenceDefaultSpaceId,
+				} = this.settings;
+
+				const client = new ConfluenceClient({
+					host: confluenceDomain,
+					authentication: {
+						email: atlassianUsername,
+						apiToken: atlassianApiToken,
+					},
+				});
+
+				const file = this.app.vault.getAbstractFileByPath(
+					ctx.file?.path || ""
+				);
+
+				const fileData = await this.app.vault.read(file);
+
+				const props = new PropertiesAdaptor().loadProperties(fileData);
+
+				await client.page.updatePage({
+					pageId: Number(props.properties.pageId),
+					pageTitle: file.name,
+					adf,
+				});
+			},
+		});
+
 		// Register commands
 		this.addCommand({
 			id: "upload-file-to-confluence",
@@ -75,32 +143,34 @@ export default class Obs2ConFluxPlugin extends Plugin {
 					});
 				}
 
-				const adf = new FileAdaptor(this.app).convertObs2Adf(
-					fileData,
-					ctx.file?.path || ""
-				);
-
 				if (!pageId) {
 					response = await client.page.createPage({
 						spaceId: Number(spaceId),
 						pageTitle: file.name,
 					});
-				} else {
-					response = await client.page.updatePage({
-						pageId: Number(pageId),
-						pageTitle: file.name,
-						adf,
+
+					props.addProperties({
+						pageId: response.id,
+						spaceId: response.spaceId,
+						confluenceUrl:
+							response._links.base + response._links.webui,
 					});
 				}
 
-				props.addProperties({
-					pageId: response.id,
-					spaceId: response.spaceId,
-					confluenceUrl: response._links.base + response._links.webui,
-				});
-
 				// Write the updated content back to the Obsidian file
 				await this.app.vault.modify(file, props.toFile(fileData));
+
+				const adf = await new FileAdaptor(
+					this.app,
+					client,
+					Number(spaceId)
+				).convertObs2Adf(fileData, ctx.file?.path || "");
+
+				client.page.updatePage({
+					pageId: Number(props.properties.pageId),
+					pageTitle: file.name,
+					adf,
+				});
 			},
 		});
 	}

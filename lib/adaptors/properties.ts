@@ -1,5 +1,5 @@
 import { load, JSON_SCHEMA } from "js-yaml";
-import { map, isArray, isDate } from "lodash";
+import { map, isArray, isDate, isEmpty } from "lodash";
 
 export interface PropsType {
 	tags?: string | boolean | Array<string | boolean>;
@@ -31,7 +31,10 @@ export default class PropertiesAdaptor {
 		const existingFrontMatterObject = load(existingFrontMatter, {
 			schema: JSON_SCHEMA,
 		}) as { [key: string]: any };
-		this.properties = existingFrontMatterObject;
+
+		if (existingFrontMatterObject) {
+			this.properties = existingFrontMatterObject;
+		}
 
 		return this;
 	}
@@ -47,6 +50,10 @@ export default class PropertiesAdaptor {
 
 	toFile(str: string): string {
 		const frontMatterMatch = str.match(/^---\n([\s\S]+?)\n---\n/);
+
+		if (isEmpty(this.properties)) {
+			return;
+		}
 
 		if (!frontMatterMatch) {
 			return `---\n${this.serializeProperties()}\n---\n${str}`;

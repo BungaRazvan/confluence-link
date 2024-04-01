@@ -1,14 +1,28 @@
+import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
+
 import ADFBuilder from "../builder/adf";
-import { ListItemElement, TaskItemElement } from "lib/builder/types";
-import { App, Component, MarkdownRenderer } from "obsidian";
+import {
+	AdfElement,
+	ListItemElement,
+	TaskItemElement,
+} from "lib/builder/types";
+import ConfluenceClient from "lib/confluence/client";
+import PropertiesAdaptor from "./properties";
 
 export default class FileAdaptor {
-	constructor(private app: App) {
+	constructor(
+		private readonly app: App,
+		private readonly client: ConfluenceClient,
+		private readonly spaceId: number
+	) {
 		this.app = app;
+		this.client = client;
+		this.spaceId = spaceId;
 	}
 
-	convertObs2Adf(text: string, path: string) {
+	async convertObs2Adf(text: string, path: string): Promise<AdfElement> {
 		const container = document.createElement("div");
+
 		MarkdownRenderer.render(
 			this.app,
 			text,
@@ -16,21 +30,86 @@ export default class FileAdaptor {
 			path,
 			new Component()
 		);
-		console.log(container);
-		return this.htmlToAdf(container);
+		return await this.htmlToAdf(container);
 	}
 
-	htmlToAdf(container: HTMLElement) {
+	async htmlToAdf(container: HTMLElement): Promise<AdfElement> {
 		const builder = new ADFBuilder();
-		container.childNodes.forEach((node: HTMLElement) => {
-			this.traverse(node, builder);
-		});
+
+		for (const node of Array.from(container.childNodes)) {
+			await this.traverse(node as HTMLElement, builder);
+		}
+
 		return builder.build();
 	}
 
-	traverse(node: HTMLElement, builder: ADFBuilder) {
-		console.log({ node });
+	async getInternalLink(path: string): Promise<string> {
+		const file = this.app.metadataCache.getFirstLinkpathDest(path, ".");
 
+		if (!(file instanceof TFile)) {
+			return "#";
+		}
+		const fileData = await this.app.vault.read(file);
+		const props = new PropertiesAdaptor().loadProperties(fileData);
+		let { confluenceUrl } = props.properties;
+
+		if (confluenceUrl) {
+			return confluenceUrl as string;
+		}
+
+		const response = await this.client.page.createPage({
+			spaceId: this.spaceId,
+			pageTitle: file.name,
+		});
+		confluenceUrl = response._links.base + response._links.webui;
+
+		props.addProperties({
+			pageId: response.id,
+			spaceId: response.spaceId,
+			confluenceUrl,
+		});
+		await this.app.vault.modify(file, props.toFile(fileData));
+
+		const adf = await this.convertObs2Adf(fileData, path);
+
+		await this.client.page.updatePage({
+			pageId: Number(props.properties.pageId),
+			pageTitle: file.name,
+			adf,
+		});
+
+		new Notice(`Page Created: ${file.name}`);
+		return confluenceUrl as string;
+	}
+
+	async findInlineElement(
+		node: HTMLElement,
+		builder: ADFBuilder
+	): Promise<AdfElement> {
+		let item = null;
+
+		switch (node.nodeName) {
+			case "A":
+				const linkEl = node as HTMLAnchorElement;
+				let href = linkEl.href!;
+				const linkText = node.textContent!;
+
+				if (linkEl.classList.contains("internal-link")) {
+					href = await this.getInternalLink(
+						linkEl.dataset.href! + ".md"
+					);
+				}
+				item = builder.linkItem(linkText, href);
+				break;
+			case "STRONG":
+				item = builder.strongItem(node.textContent!);
+				break;
+		}
+
+		return item;
+	}
+
+	async traverse(node: HTMLElement, builder: ADFBuilder) {
 		switch (node.nodeName) {
 			case "H1":
 			case "H2":
@@ -38,7 +117,12 @@ export default class FileAdaptor {
 			case "H4":
 			case "H5":
 			case "H6":
-				builder.addHeading(Number(node.nodeName[1]), node.textContent!);
+				builder.addItem(
+					builder.headingItem(
+						Number(node.nodeName[1]),
+						node.textContent!
+					)
+				);
 				break;
 			case "TABLE":
 				const tableRows = Array.from(node.querySelectorAll("tr"));
@@ -46,9 +130,9 @@ export default class FileAdaptor {
 					const cells = Array.from(
 						row.querySelectorAll("td, th")
 					).map((cell) => cell.textContent!);
-					return builder.addTableRow(cells);
+					return builder.tableRowItem(cells);
 				});
-				builder.addTable(tableContent);
+				builder.addItem(builder.tableItem(tableContent));
 				break;
 			case "PRE":
 				const codeElement = node.querySelector("code");
@@ -57,31 +141,39 @@ export default class FileAdaptor {
 					!codeElement.classList.contains("language-yaml")
 				) {
 					const codeText = codeElement.textContent || "";
-					builder.addCodeBlock(codeText);
+					builder.addItem(builder.codeBlockItem(codeText));
 				}
 				break;
 			case "EM":
 				const emText = node.textContent || "";
-				builder.addEmphasis(emText);
+				builder.addItem(builder.emphasisItem(emText));
 				break;
 			case "CODE":
 				const codeText = node.textContent || "";
-				builder.addCodeBlock(codeText);
+				builder.addItem(builder.codeBlockItem(codeText));
 				break;
 			case "P":
-				const textNodes = Array.from(node.childNodes).filter(
-					(child) => child.nodeType === Node.TEXT_NODE
-				);
-				const text = textNodes
-					.map((textNode) => textNode.textContent)
-					.join("");
-				const inlineElements = Array.from(node.childNodes).filter(
-					(child) => child.nodeType === Node.ELEMENT_NODE
-				);
-				builder.addParagraph(text);
-				inlineElements.forEach((inlineElement) => {
-					this.traverse(inlineElement as HTMLElement, builder);
-				});
+				const p = builder.paragraphItem();
+
+				for (const _node of Array.from(node.childNodes)) {
+					if (_node.nodeType == Node.TEXT_NODE) {
+						p.content.push(builder.textItem(_node.textContent!));
+						continue;
+					}
+
+					if (_node.nodeType == Node.ELEMENT_NODE) {
+						let item = await this.findInlineElement(
+							_node as HTMLElement,
+							builder
+						);
+
+						if (item) {
+							p.content.push(item);
+						}
+					}
+				}
+
+				builder.addItem(p);
 				break;
 
 			case "OL":
@@ -102,35 +194,26 @@ export default class FileAdaptor {
 					}
 				);
 				if (isTaskList) {
-					builder.addTaskList(listItems as TaskItemElement[]);
+					builder.addItem(
+						builder.taskListItem(listItems as TaskItemElement[])
+					);
 					break;
 				} else if (node.nodeName === "OL") {
-					builder.addOrderedList(listItems as ListItemElement[]);
+					builder.addItem(
+						builder.orderedListItem(listItems as ListItemElement[])
+					);
 					break;
 				} else {
-					builder.addBulletList(listItems as ListItemElement[]);
+					builder.addItem(
+						builder.bulletListItem(listItems as ListItemElement[])
+					);
 					break;
 				}
-
-			case "A":
-				const linkEl = node as HTMLAnchorElement;
-				const href = linkEl.href || "";
-				const linkText = node.textContent || "";
-
-				if (linkEl.classList.contains("internal-link")) {
-					console.log("here");
-				}
-
-				builder.addLink(linkText, href);
-				break;
 			case "BLOCKQUOTE":
-				builder.addBlockquote(node.textContent!);
+				builder.addItem(builder.blockquoteItem(node.textContent!));
 				break;
 			case "HR":
-				builder.addHorizontalRule();
-				break;
-			case "STRONG":
-				builder.addStrong(node.textContent!);
+				builder.addItem(builder.horizontalRuleItem());
 				break;
 		}
 	}

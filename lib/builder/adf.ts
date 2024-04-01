@@ -22,42 +22,37 @@ export default class ADFBuilder {
 		this.adf = [];
 	}
 
-	addHeading(level: number, text: string): this {
-		const heading: HeadingElement = {
+	headingItem(level: number, text: string): HeadingElement {
+		const heading = {
 			type: "heading",
 			content: [{ type: "text", text: text }],
 			attrs: { level: level },
 		};
-		this.adf.push(heading);
-		return this;
+		return heading;
 	}
 
-	addHorizontalRule(): this {
-		this.adf.push({
+	horizontalRuleItem(): this {
+		return {
 			type: "rule",
-		});
-		return this;
+		};
 	}
 
-	addParagraph(text?: string): this {
-		const paragraph: ParagraphElement = {
+	paragraphItem(text?: string): ParagraphElement {
+		const paragraph = {
 			type: "paragraph",
 			content: text ? [{ type: "text", text: text }] : [],
 		};
-		this.adf.push(paragraph);
-		return this;
+		return paragraph;
 	}
 
-	addTable(tableContent: Array<TableRowElement>): this {
-		const table: TableElement = {
+	tableItem(tableContent: Array<TableRowElement>): TableElement {
+		return {
 			type: "table",
 			content: tableContent,
 		};
-		this.adf.push(table);
-		return this;
 	}
 
-	addTableRow(cells: string[]): TableRowElement {
+	tableRowItem(cells: string[]): TableRowElement {
 		const tableRow = {
 			type: "tableRow",
 			content: cells.map((cellText) => ({
@@ -85,18 +80,16 @@ export default class ADFBuilder {
 		return tableRow;
 	}
 
-	addCodeBlock(codeText: string): this {
-		const codeBlock: CodeBlockElement = {
+	codeBlockItem(codeText: string): CodeBlockElement {
+		return {
 			type: "codeBlock",
 			attrs: { language: "" },
 			content: [{ type: "text", text: codeText }],
 		};
-		this.adf.push(codeBlock);
-		return this;
 	}
 
-	addTaskList(taskListItems: Array<TaskItemElement>): this {
-		const taskList: TaskListItemElement = {
+	taskListItem(taskListItems: Array<TaskItemElement>): TaskListItemElement {
+		return {
 			type: "taskList",
 			content: taskListItems,
 			attrs: { localId: "Task List" },
@@ -105,50 +98,45 @@ export default class ADFBuilder {
 		return this;
 	}
 
-	addStrong(text: string): this {
-		const strongText: TextElement = {
+	textItem(text: string): TextElement {
+		return {
+			type: "text",
+			text: text,
+		};
+	}
+
+	strongItem(text: string): TextElement {
+		return {
 			type: "text",
 			text: text,
 			marks: [{ type: "strong" }],
 		};
-		const paragraph: ParagraphElement = {
-			type: "paragraph",
-			content: [strongText],
-		};
-		this.adf.push(paragraph);
-		return this;
 	}
 
-	addBulletList(listItems: Array<ListItemElement>): this {
-		const bulletList: BulletListItemElement = {
+	bulletListItem(listItems: Array<ListItemElement>): BulletListItemElement {
+		return {
 			type: "bulletList",
 			content: listItems,
 		};
-		this.adf.push(bulletList);
-		return this;
 	}
 
-	addOrderedList(listItems: Array<ListItemElement>): this {
-		const orderedList: OrderedListElement = {
+	orderedListItem(listItems: Array<ListItemElement>): OrderedListElement {
+		return {
 			type: "orderedList",
 			content: listItems,
 		};
-		this.adf.push(orderedList);
-		return this;
 	}
 
-	addLink(linkText: string, href: string): this {
-		const link: LinkElement = {
+	linkItem(linkText: string, href: string): LinkElement {
+		return {
 			type: "text",
 			text: linkText,
 			marks: [{ type: "link", attrs: { href: href } }],
 		};
-		this.adf.push(link);
-		return this;
 	}
 
-	addBlockquote(blockquoteText: string): this {
-		const blockquote: BlockquoteElement = {
+	blockquoteItem(blockquoteText: string): BlockquoteElement {
+		return {
 			type: "blockquote",
 			content: [
 				{
@@ -157,17 +145,14 @@ export default class ADFBuilder {
 				},
 			],
 		};
-		this.adf.push(blockquote);
-		return this;
 	}
 
-	addEmphasis(emText: string): this {
-		this.adf.push({
+	emphasisItem(emText: string) {
+		return {
 			type: "text",
 			text: emText,
 			marks: [{ type: "em" }],
-		});
-		return this;
+		};
 	}
 
 	listItem(text: string): ListItemElement {
@@ -199,6 +184,11 @@ export default class ADFBuilder {
 				},
 			],
 		};
+	}
+
+	addItem(item): this {
+		this.adf.push(item);
+		return this;
 	}
 
 	build(): AdfElement {

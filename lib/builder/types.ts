@@ -16,7 +16,7 @@ export interface LinkMarkElement extends MarkElement {
 
 export interface ParagraphElement {
 	type: string;
-	content: TextElement[];
+	content: TextElement[] | LinkElement[] | [];
 }
 
 export interface TableCellElement {

@@ -1,3 +1,5 @@
+import { AdfElement } from "lib/builder/types";
+
 export type SearchByCQL = {
 	cql: string;
 	cqlcontext?: string;
@@ -17,6 +19,7 @@ export type CreatePage = {
 	spaceId: number;
 	pageTitle: string;
 	parentId?: number;
+	adf?: AdfElement;
 };
 
 export type UpdatePage = {
@@ -25,6 +28,7 @@ export type UpdatePage = {
 	spaceId?: number;
 	parentId?: number;
 	ownerId?: number;
+	adf?: AdfElement;
 };
 
 export type GetPageById = {
