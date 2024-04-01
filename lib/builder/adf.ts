@@ -13,10 +13,11 @@ import {
 	BulletListItemElement,
 	OrderedListElement,
 	AdfElement,
+	EmphasisElement,
 } from "./types";
 
 export default class ADFBuilder {
-	private adf: AdfElement;
+	private adf: AdfElement[];
 
 	constructor() {
 		this.adf = [];
@@ -31,7 +32,7 @@ export default class ADFBuilder {
 		return heading;
 	}
 
-	horizontalRuleItem(): this {
+	horizontalRuleItem(): { type: "rule" } {
 		return {
 			type: "rule",
 		};
@@ -80,6 +81,30 @@ export default class ADFBuilder {
 		return tableRow;
 	}
 
+	codeItem(codeText: string): TextElement {
+		return {
+			type: "text",
+			text: codeText,
+			marks: [{ type: "code" }],
+		};
+	}
+
+	underlineItem(text: string): TextElement {
+		return {
+			type: "text",
+			text: text,
+			marks: [{ type: "underline" }],
+		};
+	}
+
+	strikeItem(text: string): TextElement {
+		return {
+			type: "text",
+			text: text,
+			marks: [{ type: "strike" }],
+		};
+	}
+
 	codeBlockItem(codeText: string): CodeBlockElement {
 		return {
 			type: "codeBlock",
@@ -94,8 +119,6 @@ export default class ADFBuilder {
 			content: taskListItems,
 			attrs: { localId: "Task List" },
 		};
-		this.adf.push(taskList);
-		return this;
 	}
 
 	textItem(text: string): TextElement {
@@ -147,7 +170,7 @@ export default class ADFBuilder {
 		};
 	}
 
-	emphasisItem(emText: string) {
+	emphasisItem(emText: string): EmphasisElement {
 		return {
 			type: "text",
 			text: emText,
@@ -186,12 +209,12 @@ export default class ADFBuilder {
 		};
 	}
 
-	addItem(item): this {
+	addItem(item: AdfElement): this {
 		this.adf.push(item);
 		return this;
 	}
 
-	build(): AdfElement {
+	build(): AdfElement[] {
 		return this.adf;
 	}
 }

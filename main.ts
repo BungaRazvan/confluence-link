@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
+import { Editor, MarkdownView, Notice, Plugin, TFile, TFolder } from "obsidian";
 
 import { Obs2ConFluxSettingsTab } from "lib/settings";
 import { Obs2ConFluxSettings } from "lib/confluence/types";
@@ -20,74 +20,6 @@ export default class Obs2ConFluxPlugin extends Plugin {
 			"Upload file to confluence",
 			(evt: MouseEvent) => {}
 		);
-
-		this.addCommand({
-			id: "test-link",
-			name: "test-link",
-			editorCallback: async (editor, ctx) => {
-				const adf = [
-					{
-						type: "paragraph",
-						content: [
-							{
-								type: "text",
-								text: "This is page 1",
-							},
-						],
-					},
-					{
-						type: "paragraph",
-						content: [
-							{
-								type: "text",
-								text: "to ",
-							},
-						],
-					},
-					{
-						type: "text",
-						text: "Page 2",
-						marks: [
-							{
-								type: "link",
-								attrs: {
-									href: "https://razvanbunga.atlassian.net/wiki/spaces/~5f785303b61f66006f163366/pages/5603440/Page+2.md",
-								},
-							},
-						],
-					},
-				];
-
-				const {
-					atlassianUsername,
-					atlassianApiToken,
-					confluenceDomain,
-					confluenceDefaultSpaceId,
-				} = this.settings;
-
-				const client = new ConfluenceClient({
-					host: confluenceDomain,
-					authentication: {
-						email: atlassianUsername,
-						apiToken: atlassianApiToken,
-					},
-				});
-
-				const file = this.app.vault.getAbstractFileByPath(
-					ctx.file?.path || ""
-				);
-
-				const fileData = await this.app.vault.read(file);
-
-				const props = new PropertiesAdaptor().loadProperties(fileData);
-
-				await client.page.updatePage({
-					pageId: Number(props.properties.pageId),
-					pageTitle: file.name,
-					adf,
-				});
-			},
-		});
 
 		// Register commands
 		this.addCommand({

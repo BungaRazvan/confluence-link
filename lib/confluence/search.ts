@@ -1,10 +1,10 @@
-import { Client, RequestConfig } from "./types";
+import { Client, RequestConfig, SearchResponse } from "./types";
 import { SearchByCQL } from "./parameters";
 
 export class Search {
 	constructor(private client: Client) {}
 
-	async searchByCQL(parameters: SearchByCQL): Promise<object> {
+	async searchByCQL(parameters: SearchByCQL): Promise<SearchResponse> {
 		const config: RequestConfig = {
 			url: "rest/api/search",
 			method: "GET",
@@ -24,6 +24,6 @@ export class Search {
 			},
 		};
 
-		return (await this.client.sendRequest(config)) as object;
+		return await this.client.sendRequest(config);
 	}
 }

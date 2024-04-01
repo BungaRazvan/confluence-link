@@ -3,8 +3,11 @@ import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
 import ADFBuilder from "../builder/adf";
 import {
 	AdfElement,
+	EmphasisElement,
+	LinkElement,
 	ListItemElement,
 	TaskItemElement,
+	TextElement,
 } from "lib/builder/types";
 import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "./properties";
@@ -20,7 +23,7 @@ export default class FileAdaptor {
 		this.spaceId = spaceId;
 	}
 
-	async convertObs2Adf(text: string, path: string): Promise<AdfElement> {
+	async convertObs2Adf(text: string, path: string): Promise<AdfElement[]> {
 		const container = document.createElement("div");
 
 		MarkdownRenderer.render(
@@ -33,7 +36,7 @@ export default class FileAdaptor {
 		return await this.htmlToAdf(container);
 	}
 
-	async htmlToAdf(container: HTMLElement): Promise<AdfElement> {
+	async htmlToAdf(container: HTMLElement): Promise<AdfElement[]> {
 		const builder = new ADFBuilder();
 
 		for (const node of Array.from(container.childNodes)) {
@@ -85,7 +88,7 @@ export default class FileAdaptor {
 	async findInlineElement(
 		node: HTMLElement,
 		builder: ADFBuilder
-	): Promise<AdfElement> {
+	): Promise<TextElement | LinkElement | EmphasisElement | null> {
 		let item = null;
 
 		switch (node.nodeName) {
@@ -103,6 +106,18 @@ export default class FileAdaptor {
 				break;
 			case "STRONG":
 				item = builder.strongItem(node.textContent!);
+				break;
+			case "EM":
+				item = builder.emphasisItem(node.textContent!);
+				break;
+			case "CODE":
+				item = builder.codeItem(node.textContent!);
+				break;
+			case "U":
+				item = builder.underlineItem(node.textContent!);
+				break;
+			case "S":
+				item = builder.strikeItem(node.textContent!);
 				break;
 		}
 
@@ -144,20 +159,17 @@ export default class FileAdaptor {
 					builder.addItem(builder.codeBlockItem(codeText));
 				}
 				break;
-			case "EM":
-				const emText = node.textContent || "";
-				builder.addItem(builder.emphasisItem(emText));
-				break;
-			case "CODE":
-				const codeText = node.textContent || "";
-				builder.addItem(builder.codeBlockItem(codeText));
-				break;
 			case "P":
 				const p = builder.paragraphItem();
 
 				for (const _node of Array.from(node.childNodes)) {
+					const elementNode = _node as HTMLElement;
+
 					if (_node.nodeType == Node.TEXT_NODE) {
-						p.content.push(builder.textItem(_node.textContent!));
+						p.content.push(
+							builder.textItem(elementNode.textContent!)
+						);
+
 						continue;
 					}
 
@@ -168,7 +180,7 @@ export default class FileAdaptor {
 						);
 
 						if (item) {
-							p.content.push(item);
+							p.content.push(item!);
 						}
 					}
 				}

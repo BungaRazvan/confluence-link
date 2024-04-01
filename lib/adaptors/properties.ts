@@ -52,7 +52,7 @@ export default class PropertiesAdaptor {
 		const frontMatterMatch = str.match(/^---\n([\s\S]+?)\n---\n/);
 
 		if (isEmpty(this.properties)) {
-			return;
+			return "";
 		}
 
 		if (!frontMatterMatch) {

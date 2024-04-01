@@ -1,10 +1,10 @@
-import { Client, RequestConfig } from "./types";
+import { Client, PageResponse, GetPagesResponse, RequestConfig } from "./types";
 import { CreatePage, UpdatePage, GetPageById } from "./parameters";
 
 export class Page {
 	constructor(private client: Client) {}
 
-	async createPage(parameters: CreatePage) {
+	async createPage(parameters: CreatePage): Promise<PageResponse> {
 		const config: RequestConfig = {
 			url: "api/v2/pages",
 			method: "POST",
@@ -22,17 +22,20 @@ export class Page {
 				type: "doc",
 				content: parameters.adf,
 			};
-			// @ts-ignore
-			config.params.body = {
-				representation: "atlas_doc_format",
-				value: JSON.stringify(adf_body),
+
+			config.params = {
+				...config.params,
+				body: {
+					representation: "atlas_doc_format",
+					value: JSON.stringify(adf_body),
+				},
 			};
 		}
 
 		return await this.client.sendRequest(config);
 	}
 
-	async updatePage(parameters: UpdatePage) {
+	async updatePage(parameters: UpdatePage): Promise<PageResponse> {
 		const pageResponse = await this.getPageById({
 			pageId: parameters.pageId,
 		});
@@ -61,19 +64,19 @@ export class Page {
 				content: parameters.adf,
 			};
 
-			// @ts-ignore
-			config.params.body = {
-				representation: "atlas_doc_format",
-				value: JSON.stringify(adf_body),
+			config.params = {
+				...config.params,
+				body: {
+					representation: "atlas_doc_format",
+					value: JSON.stringify(adf_body),
+				},
 			};
 		}
-
-		console.trace(parameters.adf);
 
 		return await this.client.sendRequest(config);
 	}
 
-	async getPageById(parameters: GetPageById) {
+	async getPageById(parameters: GetPageById): Promise<PageResponse> {
 		const config: RequestConfig = {
 			url: `api/v2/pages/${parameters.pageId}`,
 			method: "GET",
@@ -82,7 +85,7 @@ export class Page {
 		return await this.client.sendRequest(config);
 	}
 
-	async getPages() {
+	async getPages(): Promise<GetPagesResponse> {
 		const config: RequestConfig = {
 			url: "api/v2/pages",
 			method: "GET",

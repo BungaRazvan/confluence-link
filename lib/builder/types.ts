@@ -1,22 +1,55 @@
-export interface TextElement {
-	type: string;
-	text: string;
-	marks?: { type: string }[];
-}
-
-export interface MarkElement {
-	type: string;
-}
-
-export interface LinkMarkElement extends MarkElement {
+export interface LinkMarkElement {
+	type: "link";
 	attrs: {
 		href: string;
 	};
 }
 
+export interface CodeMarkElement {
+	type: "code";
+}
+
+export type StrongMarkElement = {
+	type: "strong";
+};
+
+export type UnderlineMarkElement = {
+	type: "underline";
+};
+
+export type StrikeMarkElement = {
+	type: "strike";
+};
+
+export interface Mark {
+	marks?: (
+		| LinkMarkElement
+		| CodeMarkElement
+		| StrongMarkElement
+		| UnderlineMarkElement
+		| StrikeMarkElement
+	)[];
+}
+
+export interface TextElement extends Mark {
+	type: string;
+	text: string;
+}
+
+export interface LinkElement {
+	type: string;
+	text: string;
+	marks: LinkMarkElement[];
+}
+
 export interface ParagraphElement {
 	type: string;
-	content: TextElement[] | LinkElement[] | [];
+	content: (TextElement | LinkElement | EmphasisElement)[];
+}
+export interface EmphasisElement {
+	type: "text";
+	text: string;
+	marks: [{ type: "em" }];
 }
 
 export interface TableCellElement {
@@ -87,12 +120,6 @@ export interface OrderedListElement {
 	content: ListItemElement[];
 }
 
-export interface LinkElement {
-	type: string;
-	text: string;
-	marks: LinkMarkElement[];
-}
-
 export interface BlockquoteElement {
 	type: string;
 	content: ParagraphElement[];
@@ -108,7 +135,7 @@ export type ListItemElement = {
 	content: ParagraphElement[];
 };
 
-export type AdfElement = Array<
+export type AdfElement =
 	| HeadingElement
 	| ParagraphElement
 	| TableElement
@@ -119,4 +146,4 @@ export type AdfElement = Array<
 	| LinkElement
 	| BlockquoteElement
 	| RuleElement
->;
+	| EmphasisElement;
