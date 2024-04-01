@@ -16,6 +16,19 @@ export class Page {
 			},
 		};
 
+		if (parameters.adf) {
+			const adf_body = {
+				version: 1,
+				type: "doc",
+				content: parameters.adf,
+			};
+			// @ts-ignore
+			config.params.body = {
+				representation: "atlas_doc_format",
+				value: JSON.stringify(adf_body),
+			};
+		}
+
 		return await this.client.sendRequest(config);
 	}
 
@@ -24,15 +37,6 @@ export class Page {
 			pageId: parameters.pageId,
 		});
 
-		let adf_body = {
-			version: 1,
-			type: "doc",
-			content: parameters.adf,
-		};
-
-		console.log(adf_body);
-
-		console.log(adf_body);
 		const config: RequestConfig = {
 			url: `api/v2/pages/${parameters.pageId}`,
 			method: "PUT",
@@ -47,14 +51,25 @@ export class Page {
 					number: pageResponse.version.number + 1,
 					message: `Obsidian update ${new Date().toISOString()}`,
 				},
-				body: {
-					representation: "atlas_doc_format",
-					value: JSON.stringify(adf_body),
-				},
 			},
 		};
 
-		// console.log("here", config);
+		if (parameters.adf) {
+			const adf_body = {
+				version: 1,
+				type: "doc",
+				content: parameters.adf,
+			};
+
+			// @ts-ignore
+			config.params.body = {
+				representation: "atlas_doc_format",
+				value: JSON.stringify(adf_body),
+			};
+		}
+
+		console.trace(parameters.adf);
+
 		return await this.client.sendRequest(config);
 	}
 

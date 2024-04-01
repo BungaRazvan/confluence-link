@@ -14,16 +14,14 @@
 	"devDependencies": {
 		"@types/js-yaml": "^4.0.9",
 		"@types/lodash": "4.14.202",
-		"@types/markdown-it": "13.0.7",
 		"@types/node": "16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
+		"adf-builder": "^3.3.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
 		"js-yaml": "4.1.0",
 		"lodash": "4.17.21",
-		"markdown-it": "14.1.0",
-		"markdown-it-mark": "4.0.0",
 		"obsidian": "latest",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4"

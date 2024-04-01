@@ -1,144 +1,59 @@
-interface TextElement {
-	type: string;
-	text: string;
-}
-
-interface MarkElement {
-	type: string;
-}
-
-interface LinkMarkElement extends MarkElement {
-	attrs: {
-		href: string;
-	};
-}
-
-interface ParagraphElement {
-	type: string;
-	content: TextElement[];
-}
-
-interface TableCellElement {
-	type: string;
-	attrs: {
-		background: string;
-		colwidth: any[];
-		colspan: number;
-		rowspan: number;
-	};
-	content: ParagraphElement[];
-}
-
-interface TableRowElement {
-	type: string;
-	content: TableCellElement[];
-}
-
-interface HeadingElement {
-	type: string;
-	content: TextElement[];
-	attrs: {
-		level: number;
-	};
-}
-
-interface TableElement {
-	type: string;
-	content: TableRowElement[];
-}
-
-interface CodeBlockElement {
-	type: string;
-	attrs: {
-		language: string;
-	};
-	content: TextElement[];
-}
-
-interface TaskListItemElement {
-	type: string;
-	content: ParagraphElement[];
-	attrs: {
-		localId: string;
-		state: string;
-	};
-}
-
-interface BulletListItemElement {
-	type: string;
-	content: ParagraphElement[];
-}
-
-interface OrderedListElement {
-	type: string;
-	content: ListItemElement[];
-}
-
-interface LinkElement {
-	type: string;
-	text: string;
-	marks: LinkMarkElement[];
-}
-
-interface BlockquoteElement {
-	type: string;
-	content: ParagraphElement[];
-}
-
-interface ADFNode {
-	type: string;
-	[key: string]: any;
-}
-
-type ListItemElement = BulletListItemElement | OrderedListElement;
+import {
+	TextElement,
+	LinkElement,
+	ParagraphElement,
+	TableElement,
+	HeadingElement,
+	CodeBlockElement,
+	TaskListItemElement,
+	ListItemElement,
+	BlockquoteElement,
+	TableRowElement,
+	TaskItemElement,
+	BulletListItemElement,
+	OrderedListElement,
+	AdfElement,
+} from "./types";
 
 export default class ADFBuilder {
-	private adf: Array<
-		| HeadingElement
-		| ParagraphElement
-		| TableElement
-		| CodeBlockElement
-		| TextElement
-		| TaskListItemElement
-		| ListItemElement
-		| LinkElement
-		| BlockquoteElement
-	>;
+	private adf: AdfElement;
 
 	constructor() {
 		this.adf = [];
 	}
 
-	addHeading(level: number, text: string): this {
-		const heading: HeadingElement = {
+	headingItem(level: number, text: string): HeadingElement {
+		const heading = {
 			type: "heading",
 			content: [{ type: "text", text: text }],
 			attrs: { level: level },
 		};
-		this.adf.push(heading);
-		return this;
+		return heading;
 	}
 
-	addParagraph(text?: string): this {
-		const paragraph: ParagraphElement = {
+	horizontalRuleItem(): this {
+		return {
+			type: "rule",
+		};
+	}
+
+	paragraphItem(text?: string): ParagraphElement {
+		const paragraph = {
 			type: "paragraph",
 			content: text ? [{ type: "text", text: text }] : [],
 		};
-		this.adf.push(paragraph);
-		return this;
+		return paragraph;
 	}
 
-	addTable(tableContent: Array<TableRowElement>): this {
-		const table: TableElement = {
+	tableItem(tableContent: Array<TableRowElement>): TableElement {
+		return {
 			type: "table",
 			content: tableContent,
 		};
-		this.adf.push(table);
-		return this;
 	}
 
-	addTableRow(cells: string[]): this {
-		const tableRow: TableRowElement = {
+	tableRowItem(cells: string[]): TableRowElement {
+		const tableRow = {
 			type: "tableRow",
 			content: cells.map((cellText) => ({
 				type: "tableCell",
@@ -161,83 +76,67 @@ export default class ADFBuilder {
 				],
 			})),
 		};
-		this.adf.push(tableRow);
-		return this;
+
+		return tableRow;
 	}
 
-	addCodeBlock(codeText: string): this {
-		const codeBlock: CodeBlockElement = {
+	codeBlockItem(codeText: string): CodeBlockElement {
+		return {
 			type: "codeBlock",
 			attrs: { language: "" },
 			content: [{ type: "text", text: codeText }],
 		};
-		this.adf.push(codeBlock);
-		return this;
 	}
 
-	addTaskList(taskListItems: Array<TaskListItemElement>): this {
-		const taskList: TaskListItemElement = {
+	taskListItem(taskListItems: Array<TaskItemElement>): TaskListItemElement {
+		return {
 			type: "taskList",
 			content: taskListItems,
-			attrs: { localId: "", state: "" },
+			attrs: { localId: "Task List" },
 		};
 		this.adf.push(taskList);
 		return this;
 	}
 
-	addStrong(text: string): this {
-		const strongText: TextElement = {
+	textItem(text: string): TextElement {
+		return {
+			type: "text",
+			text: text,
+		};
+	}
+
+	strongItem(text: string): TextElement {
+		return {
 			type: "text",
 			text: text,
 			marks: [{ type: "strong" }],
 		};
-		const paragraph: ParagraphElement = {
-			type: "paragraph",
-			content: [strongText],
-		};
-		this.adf.push(paragraph);
-		return this;
 	}
 
-	addBulletList(listItems: Array<BulletListItemElement>): this {
-		const bulletList: BulletListItemElement = {
+	bulletListItem(listItems: Array<ListItemElement>): BulletListItemElement {
+		return {
 			type: "bulletList",
 			content: listItems,
 		};
-		this.adf.push(bulletList);
-		return this;
 	}
 
-	addOrderedList(listItems: Array<OrderedListElement>): this {
-		const orderedList: OrderedListElement = {
+	orderedListItem(listItems: Array<ListItemElement>): OrderedListElement {
+		return {
 			type: "orderedList",
 			content: listItems,
 		};
-		this.adf.push(orderedList);
-		return this;
 	}
 
-	addLink(linkText: string, href: string): this {
-		const link: LinkElement = {
+	linkItem(linkText: string, href: string): LinkElement {
+		return {
 			type: "text",
 			text: linkText,
 			marks: [{ type: "link", attrs: { href: href } }],
 		};
-		this.adf.push(link);
-		return this;
 	}
 
-	addContent(content: ADFNode | ADFNode[]): this {
-		if (Array.isArray(content)) {
-			this.adf.push(...content);
-		} else {
-			this.adf.push(content);
-		}
-		return this;
-	}
-
-	addBlockquote(blockquoteText: string): this {
-		const blockquote: BlockquoteElement = {
+	blockquoteItem(blockquoteText: string): BlockquoteElement {
+		return {
 			type: "blockquote",
 			content: [
 				{
@@ -246,21 +145,53 @@ export default class ADFBuilder {
 				},
 			],
 		};
-		this.adf.push(blockquote);
+	}
+
+	emphasisItem(emText: string) {
+		return {
+			type: "text",
+			text: emText,
+			marks: [{ type: "em" }],
+		};
+	}
+
+	listItem(text: string): ListItemElement {
+		return {
+			type: "listItem",
+			content: [
+				{
+					type: "paragraph",
+					content: [
+						{
+							type: "text",
+							text: text.trim(),
+						},
+					],
+				},
+			],
+		};
+	}
+
+	taskItem(text: string, isChecked: boolean): TaskItemElement {
+		return {
+			type: "taskItem",
+			attrs: { localId: text, state: isChecked ? "DONE" : "TODO" },
+			content: [
+				{
+					type: "text",
+					text: text,
+					marks: [],
+				},
+			],
+		};
+	}
+
+	addItem(item): this {
+		this.adf.push(item);
 		return this;
 	}
 
-	build(): Array<
-		| HeadingElement
-		| ParagraphElement
-		| TableElement
-		| CodeBlockElement
-		| TextElement
-		| TaskListItemElement
-		| ListItemElement
-		| LinkElement
-		| BlockquoteElement
-	> {
+	build(): AdfElement {
 		return this.adf;
 	}
 }

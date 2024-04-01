@@ -1,12 +1,115 @@
-import MarkdownIt from "markdown-it";
-import MarkdownItMarkPlugin from "markdown-it-mark";
-import ADFBuilder from "../builder/adf";
+import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
 
-function htmlToAdf(html) {
-	const builder = new ADFBuilder();
-	const container = document.createElement("div");
-	container.innerHTML = html;
-	container.childNodes.forEach((node: HTMLElement) => {
+import ADFBuilder from "../builder/adf";
+import {
+	AdfElement,
+	ListItemElement,
+	TaskItemElement,
+} from "lib/builder/types";
+import ConfluenceClient from "lib/confluence/client";
+import PropertiesAdaptor from "./properties";
+
+export default class FileAdaptor {
+	constructor(
+		private readonly app: App,
+		private readonly client: ConfluenceClient,
+		private readonly spaceId: number
+	) {
+		this.app = app;
+		this.client = client;
+		this.spaceId = spaceId;
+	}
+
+	async convertObs2Adf(text: string, path: string): Promise<AdfElement> {
+		const container = document.createElement("div");
+
+		MarkdownRenderer.render(
+			this.app,
+			text,
+			container,
+			path,
+			new Component()
+		);
+		return await this.htmlToAdf(container);
+	}
+
+	async htmlToAdf(container: HTMLElement): Promise<AdfElement> {
+		const builder = new ADFBuilder();
+
+		for (const node of Array.from(container.childNodes)) {
+			await this.traverse(node as HTMLElement, builder);
+		}
+
+		return builder.build();
+	}
+
+	async getInternalLink(path: string): Promise<string> {
+		const file = this.app.metadataCache.getFirstLinkpathDest(path, ".");
+
+		if (!(file instanceof TFile)) {
+			return "#";
+		}
+		const fileData = await this.app.vault.read(file);
+		const props = new PropertiesAdaptor().loadProperties(fileData);
+		let { confluenceUrl } = props.properties;
+
+		if (confluenceUrl) {
+			return confluenceUrl as string;
+		}
+
+		const response = await this.client.page.createPage({
+			spaceId: this.spaceId,
+			pageTitle: file.name,
+		});
+		confluenceUrl = response._links.base + response._links.webui;
+
+		props.addProperties({
+			pageId: response.id,
+			spaceId: response.spaceId,
+			confluenceUrl,
+		});
+		await this.app.vault.modify(file, props.toFile(fileData));
+
+		const adf = await this.convertObs2Adf(fileData, path);
+
+		await this.client.page.updatePage({
+			pageId: Number(props.properties.pageId),
+			pageTitle: file.name,
+			adf,
+		});
+
+		new Notice(`Page Created: ${file.name}`);
+		return confluenceUrl as string;
+	}
+
+	async findInlineElement(
+		node: HTMLElement,
+		builder: ADFBuilder
+	): Promise<AdfElement> {
+		let item = null;
+
+		switch (node.nodeName) {
+			case "A":
+				const linkEl = node as HTMLAnchorElement;
+				let href = linkEl.href!;
+				const linkText = node.textContent!;
+
+				if (linkEl.classList.contains("internal-link")) {
+					href = await this.getInternalLink(
+						linkEl.dataset.href! + ".md"
+					);
+				}
+				item = builder.linkItem(linkText, href);
+				break;
+			case "STRONG":
+				item = builder.strongItem(node.textContent!);
+				break;
+		}
+
+		return item;
+	}
+
+	async traverse(node: HTMLElement, builder: ADFBuilder) {
 		switch (node.nodeName) {
 			case "H1":
 			case "H2":
@@ -14,156 +117,104 @@ function htmlToAdf(html) {
 			case "H4":
 			case "H5":
 			case "H6":
-				builder.addHeading(Number(node.nodeName[1]), node.textContent);
+				builder.addItem(
+					builder.headingItem(
+						Number(node.nodeName[1]),
+						node.textContent!
+					)
+				);
 				break;
 			case "TABLE":
 				const tableRows = Array.from(node.querySelectorAll("tr"));
 				const tableContent = tableRows.map((row) => {
 					const cells = Array.from(
 						row.querySelectorAll("td, th")
-					).map((cell) => cell.textContent);
-					return builder.addTableRow(cells).build();
+					).map((cell) => cell.textContent!);
+					return builder.tableRowItem(cells);
 				});
-				builder.addTable(tableContent);
+				builder.addItem(builder.tableItem(tableContent));
 				break;
 			case "PRE":
 				const codeElement = node.querySelector("code");
-				if (codeElement) {
+				if (
+					codeElement &&
+					!codeElement.classList.contains("language-yaml")
+				) {
 					const codeText = codeElement.textContent || "";
-					builder.addCodeBlock(codeText);
+					builder.addItem(builder.codeBlockItem(codeText));
 				}
 				break;
 			case "EM":
 				const emText = node.textContent || "";
-				builder.addEmphasis(emText);
+				builder.addItem(builder.emphasisItem(emText));
 				break;
 			case "CODE":
 				const codeText = node.textContent || "";
-				builder.addCodeBlock(codeText);
+				builder.addItem(builder.codeBlockItem(codeText));
 				break;
 			case "P":
-				const textNodes = Array.from(node.childNodes).filter(
-					(child) => child.nodeType === Node.TEXT_NODE
-				);
-				const text = textNodes
-					.map((textNode) => textNode.textContent)
-					.join("");
-				const inlineElements = Array.from(node.childNodes).filter(
-					(child) => child.nodeType === Node.ELEMENT_NODE
-				);
-				const inlineMarkup = inlineElements
-					.map((inlineElement) => {
-						switch (inlineElement.nodeName) {
-							case "EM":
-								return builder
-									.addEmphasis(inlineElement.textContent)
-									.build();
-							case "STRONG":
-								return builder
-									.addStrong(inlineElement.textContent)
-									.build();
-							default:
-								return null;
+				const p = builder.paragraphItem();
+
+				for (const _node of Array.from(node.childNodes)) {
+					if (_node.nodeType == Node.TEXT_NODE) {
+						p.content.push(builder.textItem(_node.textContent!));
+						continue;
+					}
+
+					if (_node.nodeType == Node.ELEMENT_NODE) {
+						let item = await this.findInlineElement(
+							_node as HTMLElement,
+							builder
+						);
+
+						if (item) {
+							p.content.push(item);
 						}
-					})
-					.filter((markup) => markup !== null);
-				const paragraph = builder.addParagraph(text);
-				inlineMarkup.forEach((markup) => paragraph.addContent(markup));
+					}
+				}
+
+				builder.addItem(p);
 				break;
+
 			case "OL":
-				const orderedListItems = Array.from(
-					node.querySelectorAll("li")
-				).map((li) => {
-					const checkbox = li.textContent.trim().startsWith("[ ]");
-					return checkbox
-						? `- [ ] ${li.textContent.slice(4).trim()}`
-						: `- ${li.textContent.trim()}`;
-				});
-				builder.addOrderedList(orderedListItems);
-				break;
 			case "UL":
-				const bulletListItems = Array.from(
-					node.querySelectorAll("li")
-				).map((li) => {
-					const checkbox = li.textContent.trim().startsWith("[ ]");
-					return checkbox
-						? `- [ ] ${li.textContent.slice(4).trim()}`
-						: `- ${li.textContent.trim()}`;
-				});
-				builder.addBulletList(bulletListItems);
-				break;
-			case "A":
-				const href = node.href || "";
-				const linkText = node.textContent || "";
-				builder.addLink(linkText, href);
-				break;
+				let isTaskList = false;
+				const listItems = Array.from(node.querySelectorAll("li")).map(
+					(li) => {
+						isTaskList = li.classList.contains("task-list-item");
+
+						if (isTaskList) {
+							return builder.taskItem(
+								li.textContent?.trim()!,
+								Boolean(li.getAttr("data-task"))
+							);
+						}
+
+						return builder.listItem(li.textContent!);
+					}
+				);
+				if (isTaskList) {
+					builder.addItem(
+						builder.taskListItem(listItems as TaskItemElement[])
+					);
+					break;
+				} else if (node.nodeName === "OL") {
+					builder.addItem(
+						builder.orderedListItem(listItems as ListItemElement[])
+					);
+					break;
+				} else {
+					builder.addItem(
+						builder.bulletListItem(listItems as ListItemElement[])
+					);
+					break;
+				}
 			case "BLOCKQUOTE":
-				builder.addBlockquote(node.textContent);
+				builder.addItem(builder.blockquoteItem(node.textContent!));
+				break;
+			case "HR":
+				builder.addItem(builder.horizontalRuleItem());
 				break;
 		}
-	});
-	return builder.build();
-}
-
-function customEmphasisRule(state, silent) {
-	const start = state.pos;
-	const max = state.posMax;
-
-	// Check if the next two characters are asterisks
-	if (
-		state.src.charCodeAt(start) === 0x2a /* asterisk */ &&
-		state.src.charCodeAt(start + 1) === 0x2a /* asterisk */ &&
-		state.src.charCodeAt(start + 2) === 0x2a /* asterisk */
-	) {
-		// Push both strong and emphasis tokens for ***
-		const tokenStrong = state.push("strong_open", "strong", 1);
-		tokenStrong.markup = "***";
-		tokenStrong.position = start;
-
-		const tokenEm = state.push("em_open", "em", 1);
-		tokenEm.markup = "***";
-		tokenEm.position = start;
-
-		state.pos += 3;
-		state.pending = "";
-		return true;
-	}
-
-	// Handle single underscores (_) as emphasis
-	if (state.src.charCodeAt(start) === 0x5f /* underscore */) {
-		const token = state.push("em_open", "em", 1);
-		token.markup = "_";
-		token.position = start;
-		state.pos++;
-		state.pending = "";
-		return true;
-	}
-
-	// Handle single asterisks (*) as strong
-	if (state.src.charCodeAt(start) === 0x2a /* asterisk */) {
-		const token = state.push("strong_open", "strong", 1);
-		token.markup = "*";
-		token.position = start;
-		state.pos++;
-		state.pending = "";
-		return true;
-	}
-
-	return false;
-}
-
-export default class FileAdaptor {
-	convertObs2Adf(text: string) {
-		const md = new MarkdownIt({
-			html: true, // Enable HTML tags in output
-			breaks: true, // Convert '\n' in paragraphs into <br>
-			linkify: true,
-		});
-		md.use(MarkdownItMarkPlugin);
-		md.inline.ruler.at("emphasis", customEmphasisRule);
-		const newText = text.replace(new RegExp(/^---\n([\s\S]+?)\n---\n/), "");
-		console.log(md.render(newText));
-
-		return htmlToAdf(md.render(newText));
 	}
 }
