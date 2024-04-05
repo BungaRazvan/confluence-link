@@ -3,11 +3,10 @@ import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
 import ADFBuilder from "../builder/adf";
 import {
 	AdfElement,
-	EmphasisElement,
-	LinkElement,
 	ListItemElement,
+	MarkedElement,
+	MarksList,
 	TaskItemElement,
-	TextElement,
 } from "lib/builder/types";
 import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "./properties";
@@ -88,20 +87,16 @@ export default class FileAdaptor {
 	async findInlineElement(
 		node: HTMLElement,
 		builder: ADFBuilder
-	): Promise<TextElement | LinkElement | EmphasisElement | null> {
+	): Promise<MarkedElement | null> {
 		let item = null;
 
 		switch (node.nodeName) {
 			case "A":
 				const linkEl = node as HTMLAnchorElement;
-				let href = linkEl.href!;
 				const linkText = node.textContent!;
 
-				if (linkEl.classList.contains("internal-link")) {
-					href = await this.getInternalLink(
-						linkEl.dataset.href! + ".md"
-					);
-				}
+				const href = await this.findLink(linkEl);
+
 				item = builder.linkItem(linkText, href);
 				break;
 			case "STRONG":
@@ -121,7 +116,76 @@ export default class FileAdaptor {
 				break;
 		}
 
-		return item;
+		if (item) {
+			const extraMarks = await this.findAllMarks(node, builder);
+			if (extraMarks.length > 0) {
+				item = {
+					...item,
+					marks: [...item.marks!, ...extraMarks],
+				};
+			}
+		}
+
+		return item as MarkedElement;
+	}
+
+	async findAllMarks(
+		node: HTMLElement,
+		builder: ADFBuilder
+	): Promise<MarksList> {
+		let marks: MarksList = [];
+
+		for (const _node of Array.from(node.childNodes)) {
+			if (_node.nodeType == Node.TEXT_NODE) {
+				break;
+			}
+
+			if (_node.nodeType == Node.ELEMENT_NODE) {
+				switch (_node.nodeName) {
+					case "A":
+						const link = await this.findLink(
+							_node as HTMLAnchorElement
+						);
+						marks.push(builder.markLink(link));
+						break;
+					case "STRONG":
+						marks.push(builder.markStrong());
+						break;
+					case "EM":
+						marks.push(builder.markEm());
+						break;
+					case "CODE":
+						marks.push(builder.markCode());
+						break;
+					case "U":
+						marks.push(builder.markUnderline());
+						break;
+					case "S":
+						marks.push(builder.markStrike());
+						break;
+				}
+
+				const moreMarks = await this.findAllMarks(
+					_node as HTMLElement,
+					builder
+				);
+
+				if (moreMarks.length > 0) {
+					marks = marks.concat(moreMarks);
+				}
+			}
+		}
+
+		return marks;
+	}
+
+	async findLink(linkEl: HTMLAnchorElement): Promise<string> {
+		let href = linkEl.href!;
+
+		if (linkEl.classList.contains("internal-link")) {
+			href = await this.getInternalLink(linkEl.dataset.href! + ".md");
+		}
+		return href;
 	}
 
 	async traverse(node: HTMLElement, builder: ADFBuilder) {

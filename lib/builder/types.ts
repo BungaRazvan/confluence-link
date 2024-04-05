@@ -1,13 +1,13 @@
-export interface LinkMarkElement {
+export type LinkMarkElement = {
 	type: "link";
 	attrs: {
 		href: string;
 	};
-}
+};
 
-export interface CodeMarkElement {
+export type CodeMarkElement = {
 	type: "code";
-}
+};
 
 export type StrongMarkElement = {
 	type: "strong";
@@ -21,19 +21,30 @@ export type StrikeMarkElement = {
 	type: "strike";
 };
 
-export interface Mark {
-	marks?: (
-		| LinkMarkElement
-		| CodeMarkElement
-		| StrongMarkElement
-		| UnderlineMarkElement
-		| StrikeMarkElement
-	)[];
+export type EmMarkElement = {
+	type: "em";
+};
+
+export type MarksList = (
+	| LinkMarkElement
+	| CodeMarkElement
+	| StrongMarkElement
+	| UnderlineMarkElement
+	| StrikeMarkElement
+	| EmMarkElement
+)[];
+
+export interface MarkElement {
+	marks?: MarksList;
 }
 
-export interface TextElement extends Mark {
+export interface TextElement extends MarkElement {
 	type: string;
 	text: string;
+}
+
+export interface MarkedElement extends TextElement {
+	mark: MarksList;
 }
 
 export interface LinkElement {
@@ -49,7 +60,7 @@ export interface ParagraphElement {
 export interface EmphasisElement {
 	type: "text";
 	text: string;
-	marks: [{ type: "em" }];
+	marks: [EmMarkElement];
 }
 
 export interface TableCellElement {

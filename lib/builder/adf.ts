@@ -14,6 +14,12 @@ import {
 	OrderedListElement,
 	AdfElement,
 	EmphasisElement,
+	LinkMarkElement,
+	StrikeMarkElement,
+	UnderlineMarkElement,
+	CodeMarkElement,
+	EmMarkElement,
+	StrongMarkElement,
 } from "./types";
 
 export default class ADFBuilder {
@@ -85,7 +91,7 @@ export default class ADFBuilder {
 		return {
 			type: "text",
 			text: codeText,
-			marks: [{ type: "code" }],
+			marks: [this.markCode()],
 		};
 	}
 
@@ -93,7 +99,7 @@ export default class ADFBuilder {
 		return {
 			type: "text",
 			text: text,
-			marks: [{ type: "underline" }],
+			marks: [this.markUnderline()],
 		};
 	}
 
@@ -101,7 +107,7 @@ export default class ADFBuilder {
 		return {
 			type: "text",
 			text: text,
-			marks: [{ type: "strike" }],
+			marks: [this.markStrike()],
 		};
 	}
 
@@ -132,7 +138,7 @@ export default class ADFBuilder {
 		return {
 			type: "text",
 			text: text,
-			marks: [{ type: "strong" }],
+			marks: [this.markStrong()],
 		};
 	}
 
@@ -154,7 +160,7 @@ export default class ADFBuilder {
 		return {
 			type: "text",
 			text: linkText,
-			marks: [{ type: "link", attrs: { href: href } }],
+			marks: [this.markLink(href)],
 		};
 	}
 
@@ -174,7 +180,7 @@ export default class ADFBuilder {
 		return {
 			type: "text",
 			text: emText,
-			marks: [{ type: "em" }],
+			marks: [this.markEm()],
 		};
 	}
 
@@ -206,6 +212,39 @@ export default class ADFBuilder {
 					marks: [],
 				},
 			],
+		};
+	}
+
+	markLink(href: string): LinkMarkElement {
+		return {
+			type: "link",
+			attrs: {
+				href,
+			},
+		};
+	}
+
+	markStrong(): StrongMarkElement {
+		return { type: "strong" };
+	}
+
+	markEm(): EmMarkElement {
+		return { type: "em" };
+	}
+
+	markCode(): CodeMarkElement {
+		return { type: "code" };
+	}
+
+	markUnderline(): UnderlineMarkElement {
+		return {
+			type: "underline",
+		};
+	}
+
+	markStrike(): StrikeMarkElement {
+		return {
+			type: "strike",
 		};
 	}
 
