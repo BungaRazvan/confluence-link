@@ -13,10 +13,17 @@ import {
 	BulletListItemElement,
 	OrderedListElement,
 	AdfElement,
+	EmphasisElement,
+	LinkMarkElement,
+	StrikeMarkElement,
+	UnderlineMarkElement,
+	CodeMarkElement,
+	EmMarkElement,
+	StrongMarkElement,
 } from "./types";
 
 export default class ADFBuilder {
-	private adf: AdfElement;
+	private adf: AdfElement[];
 
 	constructor() {
 		this.adf = [];
@@ -31,7 +38,7 @@ export default class ADFBuilder {
 		return heading;
 	}
 
-	horizontalRuleItem(): this {
+	horizontalRuleItem(): { type: "rule" } {
 		return {
 			type: "rule",
 		};
@@ -80,6 +87,30 @@ export default class ADFBuilder {
 		return tableRow;
 	}
 
+	codeItem(codeText: string): TextElement {
+		return {
+			type: "text",
+			text: codeText,
+			marks: [this.markCode()],
+		};
+	}
+
+	underlineItem(text: string): TextElement {
+		return {
+			type: "text",
+			text: text,
+			marks: [this.markUnderline()],
+		};
+	}
+
+	strikeItem(text: string): TextElement {
+		return {
+			type: "text",
+			text: text,
+			marks: [this.markStrike()],
+		};
+	}
+
 	codeBlockItem(codeText: string): CodeBlockElement {
 		return {
 			type: "codeBlock",
@@ -94,8 +125,6 @@ export default class ADFBuilder {
 			content: taskListItems,
 			attrs: { localId: "Task List" },
 		};
-		this.adf.push(taskList);
-		return this;
 	}
 
 	textItem(text: string): TextElement {
@@ -109,7 +138,7 @@ export default class ADFBuilder {
 		return {
 			type: "text",
 			text: text,
-			marks: [{ type: "strong" }],
+			marks: [this.markStrong()],
 		};
 	}
 
@@ -131,7 +160,7 @@ export default class ADFBuilder {
 		return {
 			type: "text",
 			text: linkText,
-			marks: [{ type: "link", attrs: { href: href } }],
+			marks: [this.markLink(href)],
 		};
 	}
 
@@ -147,11 +176,11 @@ export default class ADFBuilder {
 		};
 	}
 
-	emphasisItem(emText: string) {
+	emphasisItem(emText: string): EmphasisElement {
 		return {
 			type: "text",
 			text: emText,
-			marks: [{ type: "em" }],
+			marks: [this.markEm()],
 		};
 	}
 
@@ -186,12 +215,45 @@ export default class ADFBuilder {
 		};
 	}
 
-	addItem(item): this {
+	markLink(href: string): LinkMarkElement {
+		return {
+			type: "link",
+			attrs: {
+				href,
+			},
+		};
+	}
+
+	markStrong(): StrongMarkElement {
+		return { type: "strong" };
+	}
+
+	markEm(): EmMarkElement {
+		return { type: "em" };
+	}
+
+	markCode(): CodeMarkElement {
+		return { type: "code" };
+	}
+
+	markUnderline(): UnderlineMarkElement {
+		return {
+			type: "underline",
+		};
+	}
+
+	markStrike(): StrikeMarkElement {
+		return {
+			type: "strike",
+		};
+	}
+
+	addItem(item: AdfElement): this {
 		this.adf.push(item);
 		return this;
 	}
 
-	build(): AdfElement {
+	build(): AdfElement[] {
 		return this.adf;
 	}
 }

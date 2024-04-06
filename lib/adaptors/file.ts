@@ -4,6 +4,8 @@ import ADFBuilder from "../builder/adf";
 import {
 	AdfElement,
 	ListItemElement,
+	MarkedElement,
+	MarksList,
 	TaskItemElement,
 } from "lib/builder/types";
 import ConfluenceClient from "lib/confluence/client";
@@ -20,7 +22,7 @@ export default class FileAdaptor {
 		this.spaceId = spaceId;
 	}
 
-	async convertObs2Adf(text: string, path: string): Promise<AdfElement> {
+	async convertObs2Adf(text: string, path: string): Promise<AdfElement[]> {
 		const container = document.createElement("div");
 
 		MarkdownRenderer.render(
@@ -33,7 +35,7 @@ export default class FileAdaptor {
 		return await this.htmlToAdf(container);
 	}
 
-	async htmlToAdf(container: HTMLElement): Promise<AdfElement> {
+	async htmlToAdf(container: HTMLElement): Promise<AdfElement[]> {
 		const builder = new ADFBuilder();
 
 		for (const node of Array.from(container.childNodes)) {
@@ -85,28 +87,105 @@ export default class FileAdaptor {
 	async findInlineElement(
 		node: HTMLElement,
 		builder: ADFBuilder
-	): Promise<AdfElement> {
+	): Promise<MarkedElement | null> {
 		let item = null;
 
 		switch (node.nodeName) {
 			case "A":
 				const linkEl = node as HTMLAnchorElement;
-				let href = linkEl.href!;
 				const linkText = node.textContent!;
 
-				if (linkEl.classList.contains("internal-link")) {
-					href = await this.getInternalLink(
-						linkEl.dataset.href! + ".md"
-					);
-				}
+				const href = await this.findLink(linkEl);
+
 				item = builder.linkItem(linkText, href);
 				break;
 			case "STRONG":
 				item = builder.strongItem(node.textContent!);
 				break;
+			case "EM":
+				item = builder.emphasisItem(node.textContent!);
+				break;
+			case "CODE":
+				item = builder.codeItem(node.textContent!);
+				break;
+			case "U":
+				item = builder.underlineItem(node.textContent!);
+				break;
+			case "S":
+				item = builder.strikeItem(node.textContent!);
+				break;
 		}
 
-		return item;
+		if (item) {
+			const extraMarks = await this.findAllMarks(node, builder);
+			if (extraMarks.length > 0) {
+				item = {
+					...item,
+					marks: [...item.marks!, ...extraMarks],
+				};
+			}
+		}
+
+		return item as MarkedElement;
+	}
+
+	async findAllMarks(
+		node: HTMLElement,
+		builder: ADFBuilder
+	): Promise<MarksList> {
+		let marks: MarksList = [];
+
+		for (const _node of Array.from(node.childNodes)) {
+			if (_node.nodeType == Node.TEXT_NODE) {
+				break;
+			}
+
+			if (_node.nodeType == Node.ELEMENT_NODE) {
+				switch (_node.nodeName) {
+					case "A":
+						const link = await this.findLink(
+							_node as HTMLAnchorElement
+						);
+						marks.push(builder.markLink(link));
+						break;
+					case "STRONG":
+						marks.push(builder.markStrong());
+						break;
+					case "EM":
+						marks.push(builder.markEm());
+						break;
+					case "CODE":
+						marks.push(builder.markCode());
+						break;
+					case "U":
+						marks.push(builder.markUnderline());
+						break;
+					case "S":
+						marks.push(builder.markStrike());
+						break;
+				}
+
+				const moreMarks = await this.findAllMarks(
+					_node as HTMLElement,
+					builder
+				);
+
+				if (moreMarks.length > 0) {
+					marks = marks.concat(moreMarks);
+				}
+			}
+		}
+
+		return marks;
+	}
+
+	async findLink(linkEl: HTMLAnchorElement): Promise<string> {
+		let href = linkEl.href!;
+
+		if (linkEl.classList.contains("internal-link")) {
+			href = await this.getInternalLink(linkEl.dataset.href! + ".md");
+		}
+		return href;
 	}
 
 	async traverse(node: HTMLElement, builder: ADFBuilder) {
@@ -144,20 +223,17 @@ export default class FileAdaptor {
 					builder.addItem(builder.codeBlockItem(codeText));
 				}
 				break;
-			case "EM":
-				const emText = node.textContent || "";
-				builder.addItem(builder.emphasisItem(emText));
-				break;
-			case "CODE":
-				const codeText = node.textContent || "";
-				builder.addItem(builder.codeBlockItem(codeText));
-				break;
 			case "P":
 				const p = builder.paragraphItem();
 
 				for (const _node of Array.from(node.childNodes)) {
+					const elementNode = _node as HTMLElement;
+
 					if (_node.nodeType == Node.TEXT_NODE) {
-						p.content.push(builder.textItem(_node.textContent!));
+						p.content.push(
+							builder.textItem(elementNode.textContent!)
+						);
+
 						continue;
 					}
 
@@ -168,7 +244,7 @@ export default class FileAdaptor {
 						);
 
 						if (item) {
-							p.content.push(item);
+							p.content.push(item!);
 						}
 					}
 				}

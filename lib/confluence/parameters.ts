@@ -28,7 +28,7 @@ export type UpdatePage = {
 	spaceId?: number;
 	parentId?: number;
 	ownerId?: number;
-	adf?: AdfElement;
+	adf?: AdfElement[];
 };
 
 export type GetPageById = {
