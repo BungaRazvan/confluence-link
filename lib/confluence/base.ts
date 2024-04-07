@@ -83,6 +83,7 @@ export default class BaseClient {
 			// If the response status is okay, parse JSON
 			return response.json;
 		} else {
+			console.error(response.json);
 			throw new Error(`HTTP error! Status: ${response.status}`);
 		}
 	}

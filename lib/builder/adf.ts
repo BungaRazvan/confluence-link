@@ -33,7 +33,7 @@ export default class ADFBuilder {
 		const heading = {
 			type: "heading",
 			content: [{ type: "text", text: text }],
-			attrs: { level: level },
+			attrs: { level: level, id: text },
 		};
 		return heading;
 	}
