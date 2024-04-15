@@ -32,6 +32,7 @@ export default class FileAdaptor {
 			path,
 			new Component()
 		);
+		console.log(container);
 		return await this.htmlToAdf(container);
 	}
 
@@ -183,8 +184,26 @@ export default class FileAdaptor {
 		let href = linkEl.href!;
 
 		if (linkEl.classList.contains("internal-link")) {
-			href = await this.getInternalLink(linkEl.dataset.href! + ".md");
+			const dataLink = linkEl.getAttr("data-href")!;
+
+			if (dataLink.contains("#")) {
+				const paths = dataLink.split("#");
+				const newPageLink = paths.length > 1;
+
+				if (newPageLink) {
+					href =
+						(await this.getInternalLink(paths[0] + ".md")) +
+						"#" +
+						paths[1];
+					href = href.replace(" ", "-");
+				} else {
+					href = dataLink.replace(" ", "-");
+				}
+			} else {
+				href = await this.getInternalLink(linkEl.dataset.href! + ".md");
+			}
 		}
+
 		return href;
 	}
 

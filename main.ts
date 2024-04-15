@@ -6,6 +6,7 @@ import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "lib/adaptors/properties";
 import FileAdaptor from "lib/adaptors/file";
 import SpaceSearchModal from "lib/modal";
+import ADFBuilder from "lib/builder/adf";
 
 export default class Obs2ConFluxPlugin extends Plugin {
 	settings: Obs2ConFluxSettings;
@@ -98,6 +99,7 @@ export default class Obs2ConFluxPlugin extends Plugin {
 					Number(spaceId)
 				).convertObs2Adf(fileData, ctx.file?.path || "");
 
+				console.log({ adf });
 				client.page.updatePage({
 					pageId: Number(props.properties.pageId),
 					pageTitle: file.name,
