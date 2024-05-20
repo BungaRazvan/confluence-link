@@ -33,14 +33,17 @@ export default class FileAdaptor {
 			new Component()
 		);
 		console.log(container);
-		return await this.htmlToAdf(container);
+		return await this.htmlToAdf(container, path);
 	}
 
-	async htmlToAdf(container: HTMLElement): Promise<AdfElement[]> {
+	async htmlToAdf(
+		container: HTMLElement,
+		filePath: string
+	): Promise<AdfElement[]> {
 		const builder = new ADFBuilder();
 
 		for (const node of Array.from(container.childNodes)) {
-			await this.traverse(node as HTMLElement, builder);
+			await this.traverse(node as HTMLElement, builder, filePath);
 		}
 
 		return builder.build();
@@ -87,7 +90,8 @@ export default class FileAdaptor {
 
 	async findInlineElement(
 		node: HTMLElement,
-		builder: ADFBuilder
+		builder: ADFBuilder,
+		filePath: string
 	): Promise<MarkedElement | null> {
 		let item = null;
 
@@ -115,10 +119,50 @@ export default class FileAdaptor {
 			case "S":
 				item = builder.strikeItem(node.textContent!);
 				break;
+			case "SPAN":
+				const imgfile = this.app.vault.getFileByPath(
+					node.getAttr("alt")!
+				);
+
+				if (!imgfile) {
+					break;
+				}
+
+				const file = this.app.metadataCache.getFirstLinkpathDest(
+					filePath,
+					"."
+				);
+
+				if (!(file instanceof TFile)) {
+					break;
+				}
+
+				const fileData = await this.app.vault.read(file);
+				const props = new PropertiesAdaptor().loadProperties(fileData);
+				const pageId = props.properties.pageId;
+
+				const attachmentResponse =
+					await this.client.attachement.uploadImage(
+						pageId as string,
+						await this.app.vault.readBinary(imgfile),
+						imgfile.basename,
+						imgfile.extension
+					);
+
+				const { extensions } = attachmentResponse.results[0];
+				item = builder.mediaSingleItem(
+					extensions.mediaType,
+					extensions.fileId,
+					extensions.collectionName
+				);
+				builder.addItem(item);
+				item = null;
+				break;
 		}
 
 		if (item) {
 			const extraMarks = await this.findAllMarks(node, builder);
+
 			if (extraMarks.length > 0) {
 				item = {
 					...item,
@@ -207,7 +251,7 @@ export default class FileAdaptor {
 		return href;
 	}
 
-	async traverse(node: HTMLElement, builder: ADFBuilder) {
+	async traverse(node: HTMLElement, builder: ADFBuilder, filePath: string) {
 		switch (node.nodeName) {
 			case "H1":
 			case "H2":
@@ -259,7 +303,8 @@ export default class FileAdaptor {
 					if (_node.nodeType == Node.ELEMENT_NODE) {
 						let item = await this.findInlineElement(
 							_node as HTMLElement,
-							builder
+							builder,
+							filePath
 						);
 
 						if (item) {

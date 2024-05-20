@@ -27,6 +27,7 @@ export interface ObsidianRequestParams extends UrlConfig {
 }
 
 export interface Client {
+	config: Config;
 	sendRequest<T>(requestConfig: RequestConfig): T;
 }
 
