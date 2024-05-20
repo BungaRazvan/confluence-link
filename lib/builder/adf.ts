@@ -20,6 +20,7 @@ import {
 	CodeMarkElement,
 	EmMarkElement,
 	StrongMarkElement,
+	CardElementLink,
 } from "./types";
 
 export default class ADFBuilder {
@@ -161,6 +162,15 @@ export default class ADFBuilder {
 			type: "text",
 			text: linkText,
 			marks: [this.markLink(href)],
+		};
+	}
+
+	cardItem(href: string): CardElementLink {
+		return {
+			type: "inlineCard",
+			attrs: {
+				url: href,
+			},
 		};
 	}
 
