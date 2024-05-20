@@ -136,7 +136,6 @@ export default class FileAdaptor {
 				if (!(file instanceof TFile)) {
 					break;
 				}
-
 				const fileData = await this.app.vault.read(file);
 				const props = new PropertiesAdaptor().loadProperties(fileData);
 				const pageId = props.properties.pageId;
