@@ -1,5 +1,5 @@
 import { concatenateUint8Arrays, removeUndefinedProperties } from "lib/utils";
-import { Client, RequestConfig } from "./types";
+import { Client, RequestConfig, UploadResponse } from "./types";
 import { requestUrl } from "obsidian";
 
 export class Attachements {
@@ -16,12 +16,12 @@ export class Attachements {
 		imageBinary: ArrayBuffer,
 		imageName: string,
 		imageExtension: string
-	) {
+	): Promise<UploadResponse> {
 		const config: RequestConfig = {
 			url: `rest/api/content/${pageId}/child/attachment`,
 			method: "PUT",
 			params: {
-				minorEdit: "true",
+				minorEdit: true,
 				imageName,
 				imageExtension,
 				imageBinary,
@@ -31,7 +31,7 @@ export class Attachements {
 		return await this.sendRequest(config);
 	}
 
-	async sendRequest(requestConfig: RequestConfig) {
+	async sendRequest(requestConfig: RequestConfig): Promise<any> {
 		const clientConfig = this.client.config;
 		const params = removeUndefinedProperties(requestConfig.params || {});
 
@@ -64,14 +64,14 @@ export class Attachements {
 		formDataParts.push(
 			`--${boundary}\r\n` +
 				`Content-Disposition: form-data; name="minorEdit"\r\n\r\n` +
-				`true\r\n`
+				`${params.minorEdit}\r\n`
 		);
 
 		// Add comment part
 		formDataParts.push(
 			`--${boundary}\r\n` +
 				`Content-Disposition: form-data; name="comment"\r\n\r\n` +
-				`Example attachment comment\r\n`
+				`Content uploaded using Obsidian\r\n`
 		);
 
 		// End boundary

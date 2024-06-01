@@ -128,6 +128,36 @@ export interface TaskListItemElement {
 	};
 }
 
+export interface MediaItemElement {
+	type: string;
+	attrs: {
+		type: string;
+		id: string;
+		collection: string;
+		accessLevel?: "NONE" | "SITE" | "APPLICATION" | "CONRAINER";
+		text?: string;
+		userType?: "DEFAULT" | "SPECIAL" | "APP";
+	};
+}
+
+export type Layout =
+	| "wrap-left"
+	| "center"
+	| "wrap-right"
+	| "wide"
+	| "full-width"
+	| "align-start"
+	| "align-end";
+
+export interface MediaSingleItemElement {
+	type: string;
+	content: [MediaItemElement];
+	attrs: {
+		layout: Layout;
+		widht?: number;
+	};
+}
+
 export interface BulletListItemElement {
 	type: string;
 	content: ListItemElement[];

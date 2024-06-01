@@ -21,6 +21,9 @@ import {
 	EmMarkElement,
 	StrongMarkElement,
 	CardElementLink,
+	MediaSingleItemElement,
+	MediaItemElement,
+	Layout,
 } from "./types";
 
 export default class ADFBuilder {
@@ -225,7 +228,7 @@ export default class ADFBuilder {
 		};
 	}
 
-	mediaItem(type: string, id: string, collection: string) {
+	mediaItem(id: string, collection: string): MediaItemElement {
 		return {
 			type: "media",
 			attrs: {
@@ -237,14 +240,13 @@ export default class ADFBuilder {
 	}
 
 	mediaSingleItem(
-		type: string,
 		id: string,
 		collection: string,
-		layout = "center"
-	) {
+		layout: Layout = "center"
+	): MediaSingleItemElement {
 		return {
 			type: "mediaSingle",
-			content: [this.mediaItem(type, id, collection)],
+			content: [this.mediaItem(id, collection)],
 			attrs: {
 				layout,
 			},

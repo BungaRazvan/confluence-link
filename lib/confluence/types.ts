@@ -402,3 +402,118 @@ export type SearchResponse = {
 	archivedResultCount: number;
 	_links: {};
 };
+
+export type UploadResponse = {
+	results: {
+		id: string;
+		type: string;
+		status: string;
+		title: string;
+		version: {
+			by: {
+				type: "known";
+				accountId: string;
+				accountType: "atlassian";
+				email: string;
+				publicName: string;
+				profilePicture: {
+					path: string;
+					width: number;
+					height: number;
+					isDefault: boolean;
+				};
+				displayName: string;
+				isExternalCollaborator: boolean;
+				_expandable: { operations: string; personalSpace: string };
+				_links: { self: string };
+			};
+			when: string;
+			friendlyWhen: string;
+			message: string;
+			number: number;
+			minorEdit: boolean;
+			contentTypeModified: boolean;
+			_expandable: { collaborators: string; content: string };
+			_links: { self: string };
+		};
+		container: {
+			id: string;
+			type: string;
+			status: string;
+			title: string;
+			macroRenderedOutput: {};
+			extensions: { position: number };
+			_expandable: {
+				container: string;
+				metadata: string;
+				restrictions: string;
+				history: string;
+				body: string;
+				version: string;
+				descendants: string;
+				space: string;
+				childTypes: string;
+				schedulePublishInfo: string;
+				operations: string;
+				schedulePublishDate: string;
+				children: string;
+				ancestors: string;
+			};
+			_links: {
+				self: string;
+				tinyui: string;
+				editui: string;
+				webui: string;
+			};
+		};
+		macroRenderedOutput: {};
+		metadata: {
+			comment: string;
+			mediaType: string;
+			labels: {
+				results: [];
+				start: number;
+				limit: number;
+				size: number;
+				_links: { next: string; self: string };
+			};
+			_expandable: {
+				currentuser: string;
+				comments: string;
+				sourceTemplateEntityId: string;
+				simple: string;
+				properties: string;
+				frontend: string;
+				likes: string;
+			};
+		};
+		extensions: {
+			mediaType: string;
+			fileSize: number;
+			comment: string;
+			mediaTypeDescription: string;
+			fileId: string;
+			collectionName: string;
+		};
+		_expandable: {
+			childTypes: string;
+			schedulePublishInfo: string;
+			operations: string;
+			schedulePublishDate: string;
+			children: string;
+			restrictions: string;
+			history: string;
+			ancestors: string;
+			body: string;
+			descendants: string;
+			space: string;
+		};
+		_links: {
+			webui: string;
+			self: string;
+			download: string;
+		};
+	}[];
+	size: number;
+	_links: { base: string; context: string };
+};
