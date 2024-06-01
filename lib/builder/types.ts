@@ -53,9 +53,16 @@ export interface LinkElement {
 	marks: LinkMarkElement[];
 }
 
+export interface CardElementLink {
+	type: string;
+	attrs: {
+		url: string;
+	};
+}
+
 export interface ParagraphElement {
 	type: string;
-	content: (TextElement | LinkElement | EmphasisElement)[];
+	content: (TextElement | LinkElement | EmphasisElement | CardElementLink)[];
 }
 export interface EmphasisElement {
 	type: "text";

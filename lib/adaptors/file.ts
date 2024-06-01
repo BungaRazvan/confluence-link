@@ -3,6 +3,7 @@ import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
 import ADFBuilder from "../builder/adf";
 import {
 	AdfElement,
+	CardElementLink,
 	ListItemElement,
 	MarkedElement,
 	MarksList,
@@ -92,7 +93,7 @@ export default class FileAdaptor {
 		node: HTMLElement,
 		builder: ADFBuilder,
 		filePath: string
-	): Promise<MarkedElement | null> {
+	): Promise<MarkedElement | CardElementLink | null> {
 		let item = null;
 
 		switch (node.nodeName) {
@@ -101,6 +102,13 @@ export default class FileAdaptor {
 				const linkText = node.textContent!;
 
 				const href = await this.findLink(linkEl);
+
+				if (
+					linkEl.classList.contains("internal-link") &&
+					linkEl.getAttr("href") == linkText.replaceAll(" > ", "#")
+				) {
+					return builder.cardItem(href);
+				}
 
 				item = builder.linkItem(linkText, href);
 				break;
@@ -136,7 +144,6 @@ export default class FileAdaptor {
 				if (!(file instanceof TFile)) {
 					break;
 				}
-
 				const fileData = await this.app.vault.read(file);
 				const props = new PropertiesAdaptor().loadProperties(fileData);
 				const pageId = props.properties.pageId;
@@ -239,9 +246,10 @@ export default class FileAdaptor {
 						(await this.getInternalLink(paths[0] + ".md")) +
 						"#" +
 						paths[1];
-					href = href.replace(" ", "-");
+
+					href = href.replaceAll(" ", "-");
 				} else {
-					href = dataLink.replace(" ", "-");
+					href = dataLink.replaceAll(" ", "-");
 				}
 			} else {
 				href = await this.getInternalLink(linkEl.dataset.href! + ".md");
