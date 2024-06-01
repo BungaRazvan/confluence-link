@@ -1,16 +1,11 @@
-import { Notice, request, requestUrl } from "obsidian";
-import { map, isEmpty, pickBy, compact } from "lodash";
+import { requestUrl } from "obsidian";
+import { map, isEmpty, compact } from "lodash";
 import { Config, RequestConfig, ObsidianRequestParams } from "./types";
+import { removeUndefinedProperties } from "lib/utils";
 
 export default class BaseClient {
 	constructor(protected readonly config: Config) {
 		this.config = config;
-	}
-
-	protected removeUndefinedProperties(
-		obj: Record<string, any>
-	): Record<string, any> {
-		return pickBy(obj, (value) => typeof value !== "undefined");
 	}
 
 	protected paramSerializer(parameters: Record<string, any>): string {
@@ -54,9 +49,7 @@ export default class BaseClient {
 		);
 		const method = requestConfig.method;
 		const url = new URL(`/wiki/${requestConfig.url}`, this.config.host);
-		const params = this.removeUndefinedProperties(
-			requestConfig.params || {}
-		);
+		const params = removeUndefinedProperties(requestConfig.params || {});
 		const requestParams: ObsidianRequestParams = {
 			url: url.toString(),
 			method,

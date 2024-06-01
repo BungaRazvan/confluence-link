@@ -215,6 +215,32 @@ export default class ADFBuilder {
 		};
 	}
 
+	mediaItem(type: string, id: string, collection: string) {
+		return {
+			type: "media",
+			attrs: {
+				type: "file",
+				id,
+				collection,
+			},
+		};
+	}
+
+	mediaSingleItem(
+		type: string,
+		id: string,
+		collection: string,
+		layout = "center"
+	) {
+		return {
+			type: "mediaSingle",
+			content: [this.mediaItem(type, id, collection)],
+			attrs: {
+				layout,
+			},
+		};
+	}
+
 	markLink(href: string): LinkMarkElement {
 		return {
 			type: "link",
