@@ -10,12 +10,13 @@ export function removeUndefinedProperties(
 	return pickBy(obj, (value) => typeof value !== "undefined");
 }
 
-export function concatenateUint8Arrays(arrays: any[]) {
-	let totalLength = arrays.reduce((acc, value) => acc + value.length, 0);
-	let result = new Uint8Array(totalLength);
+export function concatenateUint8Arrays(arrays: any[]): Uint8Array {
+	const totalLength = arrays.reduce((acc, value) => acc + value.length, 0);
+	const result = new Uint8Array(totalLength);
+
 	let offset = 0;
 
-	for (let array of arrays) {
+	for (const array of arrays) {
 		result.set(array, offset);
 		offset += array.length;
 	}

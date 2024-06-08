@@ -58,7 +58,7 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl).addButton((button) =>
-			button.setButtonText("Test Connection").onClick(async (value) => {
+			button.setButtonText("Test Connection").onClick(async () => {
 				button.setDisabled(true);
 				button.setButtonText("Testing...");
 

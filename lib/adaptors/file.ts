@@ -33,7 +33,6 @@ export default class FileAdaptor {
 			path,
 			new Component()
 		);
-		console.log(container);
 		return await this.htmlToAdf(container, path);
 	}
 
@@ -158,7 +157,6 @@ export default class FileAdaptor {
 
 				const { extensions } = attachmentResponse.results[0];
 				item = builder.mediaSingleItem(
-					extensions.mediaType,
 					extensions.fileId,
 					extensions.collectionName
 				);

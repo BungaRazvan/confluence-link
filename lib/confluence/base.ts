@@ -33,7 +33,7 @@ export default class BaseClient {
 		).join("&");
 	}
 
-	protected encode(value: string) {
+	protected encode(value: string): string {
 		return encodeURIComponent(value)
 			.replace(/%3A/gi, ":")
 			.replace(/%24/g, "$")
@@ -43,7 +43,7 @@ export default class BaseClient {
 			.replace(/%5D/gi, "]");
 	}
 
-	async sendRequest(requestConfig: RequestConfig) {
+	async sendRequest(requestConfig: RequestConfig): Promise<any> {
 		const creds = btoa(
 			`${this.config.authentication.email}:${this.config.authentication.apiToken}`
 		);
