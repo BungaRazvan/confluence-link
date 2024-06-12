@@ -1,4 +1,12 @@
-import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
+import {
+	App,
+	Component,
+	MarkdownRenderer,
+	Notice,
+	TFile,
+	FileView,
+	Events,
+} from "obsidian";
 
 import ADFBuilder from "../builder/adf";
 import {
@@ -16,11 +24,13 @@ export default class FileAdaptor {
 	constructor(
 		private readonly app: App,
 		private readonly client: ConfluenceClient,
-		private readonly spaceId: string
+		private readonly spaceId: string,
+		private readonly followLinks: boolean
 	) {
 		this.app = app;
 		this.client = client;
 		this.spaceId = spaceId;
+		this.followLinks = followLinks;
 	}
 
 	async convertObs2Adf(text: string, path: string): Promise<AdfElement[]> {
@@ -33,6 +43,8 @@ export default class FileAdaptor {
 			path,
 			new Component()
 		);
+
+		console.log(container);
 		return await this.htmlToAdf(container, path);
 	}
 
@@ -79,7 +91,7 @@ export default class FileAdaptor {
 		const adf = await this.convertObs2Adf(fileData, path);
 
 		await this.client.page.updatePage({
-			pageId: Number(props.properties.pageId),
+			pageId: props.properties.pageId as string,
 			pageTitle: file.name,
 			adf,
 		});
@@ -97,6 +109,10 @@ export default class FileAdaptor {
 
 		switch (node.nodeName) {
 			case "A":
+				if (!this.followLinks) {
+					return null;
+				}
+
 				const linkEl = node as HTMLAnchorElement;
 				const linkText = node.textContent!;
 
@@ -127,13 +143,8 @@ export default class FileAdaptor {
 				item = builder.strikeItem(node.textContent!);
 				break;
 			case "SPAN":
-				const imgfile = this.app.vault.getFileByPath(
-					node.getAttr("alt")!
-				);
-
-				if (!imgfile) {
-					break;
-				}
+				const canvasEmbed = node.classList.contains("canvas-embed");
+				const imageEmbed = node.classList.contains("image-embed");
 
 				const file = this.app.metadataCache.getFirstLinkpathDest(
 					filePath,
@@ -143,19 +154,59 @@ export default class FileAdaptor {
 				if (!(file instanceof TFile)) {
 					break;
 				}
+
 				const fileData = await this.app.vault.read(file);
 				const props = new PropertiesAdaptor().loadProperties(fileData);
 				const pageId = props.properties.pageId;
+				let attachmentResponse = null;
 
-				const attachmentResponse =
-					await this.client.attachement.uploadImage(
-						pageId as string,
-						await this.app.vault.readBinary(imgfile),
-						imgfile.basename,
-						imgfile.extension
+				if (canvasEmbed) {
+					if (!this.followLinks) {
+						return null;
+					}
+
+					const canvasFile = this.app.vault.getFileByPath(
+						node.getAttr("src")!
 					);
 
-				const { extensions } = attachmentResponse.results[0];
+					await this.app.workspace.openLinkText(
+						node.getAttr("src")!,
+						".",
+						true,
+						{
+							state: false,
+							eState: "hidden",
+							active: false,
+						}
+					);
+
+					console.log(
+						this.app.workspace.getLeavesOfType("canvas")[0].view
+							.contentEl
+					);
+
+					// this.app.workspace.detachLeavesOfType("canvas");
+				} else if (imageEmbed) {
+					const imgFile = this.app.metadataCache.getFirstLinkpathDest(
+						node.getAttr("src")!,
+						"."
+					);
+
+					if (!imgFile) {
+						console.log("not know path", node);
+						break;
+					}
+
+					attachmentResponse =
+						await this.client.attachement.uploadImage(
+							pageId as string,
+							await this.app.vault.readBinary(imgFile),
+							imgFile.basename,
+							imgFile.extension
+						);
+				}
+
+				const { extensions } = attachmentResponse!.results[0];
 				item = builder.mediaSingleItem(
 					extensions.fileId,
 					extensions.collectionName

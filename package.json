@@ -20,6 +20,7 @@
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
+		"html-to-image": "^1.11.11",
 		"js-yaml": "4.1.0",
 		"lodash": "4.17.21",
 		"obsidian": "latest",

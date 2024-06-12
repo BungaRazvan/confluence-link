@@ -3,6 +3,7 @@ export interface Obs2ConFluxSettings {
 	atlassianUsername: string;
 	atlassianApiToken: string;
 	confluenceDefaultSpaceId: string;
+	followLinks: boolean;
 }
 
 export interface Config {
