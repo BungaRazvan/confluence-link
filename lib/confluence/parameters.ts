@@ -16,7 +16,7 @@ export type SearchByCQL = {
 };
 
 export type CreatePage = {
-	spaceId: number;
+	spaceId: string;
 	pageTitle: string;
 	parentId?: number;
 	adf?: AdfElement;

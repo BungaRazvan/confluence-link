@@ -99,7 +99,7 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 		);
 
 		new Setting(containerEl)
-			.setName("Confluence default space")
+			.setName("Confluence Default Space")
 			.setDesc("Default spaceId to save the files")
 			.addExtraButton((button) => {
 				button

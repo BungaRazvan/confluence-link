@@ -3,8 +3,7 @@
 	"name": "Obs2Con Flux",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Sync obsidian files with confluence pages",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
+	"description": "Upload obsidian files to confluence pages",
+	"author": "RazvanBunga",
 	"isDesktopOnly": true
 }

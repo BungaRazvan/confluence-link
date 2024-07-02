@@ -19,20 +19,26 @@ export default class Obs2ConFluxPlugin extends Plugin {
 		// Register commands
 		this.addCommand({
 			id: "upload-file-to-confluence",
-			name: "Upload file to confluence",
+			name: "Upload file to confluence using default space",
 			editorCallback: async (editor: Editor, ctx: MarkdownView) => {
-				this.uploadFile(ctx.file?.path || "");
+				const { confluenceDefaultSpaceId } = this.settings;
+
+				this.uploadFile(ctx.file?.path || "", confluenceDefaultSpaceId);
+			},
+		});
+
+		this.addCommand({
+			id: "upload-file-to-space",
+			name: "Upload file to space",
+			editorCallback: async (editor: Editor, ctx: MarkdownView) => {
+				this.uploadFile(ctx.file?.path || "", null);
 			},
 		});
 	}
 
-	async uploadFile(filePath: string) {
-		const {
-			atlassianUsername,
-			atlassianApiToken,
-			confluenceDomain,
-			confluenceDefaultSpaceId,
-		} = this.settings;
+	async uploadFile(filePath: string, spaceId: string | null) {
+		const { atlassianUsername, atlassianApiToken, confluenceDomain } =
+			this.settings;
 
 		if (!atlassianApiToken || !atlassianUsername || !confluenceDomain) {
 			new Notice(
@@ -59,7 +65,6 @@ export default class Obs2ConFluxPlugin extends Plugin {
 		const { pageId } = props.properties;
 
 		let response = null;
-		let spaceId = confluenceDefaultSpaceId || null;
 
 		if (!spaceId && !pageId) {
 			await new Promise<void>((resolve) => {
@@ -72,7 +77,7 @@ export default class Obs2ConFluxPlugin extends Plugin {
 
 		if (!pageId) {
 			response = await client.page.createPage({
-				spaceId: Number(spaceId),
+				spaceId: spaceId as string,
 				pageTitle: file.name.replace(".md", ""),
 			});
 
@@ -89,7 +94,7 @@ export default class Obs2ConFluxPlugin extends Plugin {
 		const adf = await new FileAdaptor(
 			this.app,
 			client,
-			Number(spaceId)
+			spaceId as string
 		).convertObs2Adf(fileData, filePath || "");
 
 		client.page.updatePage({
