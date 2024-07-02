@@ -50,3 +50,21 @@ jobs:
                       release_name: Release v${{ env.app_version }}
                       draft: false
                       prerelease: false
+
+                - name: Upload main.js
+                  uses: actions/upload-release-asset@v1
+                  env:
+                      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+                  with:
+                      upload_url: ${{ steps.create_release.outputs.upload_url }}
+                      asset_path: ./main.js
+                      asset_name: main.js
+
+                - name: Upload manifest.json
+                  uses: actions/upload-release-asset@v1
+                  env:
+                      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+                  with:
+                      upload_url: ${{ steps.create_release.outputs.upload_url }}
+                      asset_path: ./manifest.json
+                      asset_name: manifest.json

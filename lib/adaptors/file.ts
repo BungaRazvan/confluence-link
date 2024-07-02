@@ -16,7 +16,7 @@ export default class FileAdaptor {
 	constructor(
 		private readonly app: App,
 		private readonly client: ConfluenceClient,
-		private readonly spaceId: number
+		private readonly spaceId: string
 	) {
 		this.app = app;
 		this.client = client;
