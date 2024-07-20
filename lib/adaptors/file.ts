@@ -1,12 +1,4 @@
-import {
-	App,
-	Component,
-	MarkdownRenderer,
-	Notice,
-	TFile,
-	FileView,
-	Events,
-} from "obsidian";
+import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
 
 import ADFBuilder from "../builder/adf";
 import {
@@ -100,17 +92,18 @@ export default class FileAdaptor {
 		return confluenceUrl as string;
 	}
 
-	async findInlineElement(
+	async findNestedElement(
 		node: HTMLElement,
 		builder: ADFBuilder,
 		filePath: string
-	): Promise<MarkedElement | CardElementLink | null> {
+	): Promise<Record<string, any>> {
 		let item = null;
+		let type = null;
 
 		switch (node.nodeName) {
 			case "A":
 				if (!this.followLinks) {
-					return null;
+					break;
 				}
 
 				const linkEl = node as HTMLAnchorElement;
@@ -126,27 +119,29 @@ export default class FileAdaptor {
 				}
 
 				item = builder.linkItem(linkText, href);
+				type = "inline";
 				break;
 			case "STRONG":
 				item = builder.strongItem(node.textContent!);
+				type = "inline";
 				break;
 			case "EM":
 				item = builder.emphasisItem(node.textContent!);
+				type = "inline";
 				break;
 			case "CODE":
 				item = builder.codeItem(node.textContent!);
+				type = "inline";
 				break;
 			case "U":
 				item = builder.underlineItem(node.textContent!);
+				type = "inline";
 				break;
 			case "S":
 				item = builder.strikeItem(node.textContent!);
+				type = "inline";
 				break;
 			case "SPAN":
-				const canvasEmbed = node.classList.contains("canvas-embed");
-				const imageEmbed = node.classList.contains("image-embed");
-				const pdfEmbed = node.classList.contains("pdf-embed");
-
 				const file = this.app.metadataCache.getFirstLinkpathDest(
 					filePath,
 					"."
@@ -162,16 +157,20 @@ export default class FileAdaptor {
 				const pageId = props.properties.pageId;
 				const src = node.getAttr("src")!;
 
+				const canvasEmbed = node.classList.contains("canvas-embed");
+				const imageEmbed = node.classList.contains("image-embed");
+				const pdfEmbed = node.classList.contains("pdf-embed");
+				const videoEmbed = node.classList.contains("video-embed");
+
 				if (canvasEmbed) {
+					// TODO figure out canvas
+					break;
+
 					if (!this.followLinks) {
-						return null;
+						break;
 					}
 
 					const canvasFile = this.app.vault.getFileByPath(src);
-
-					console.log(canvasFile);
-
-					return;
 
 					await this.app.workspace.openLinkText(src!, ".", true, {
 						state: false,
@@ -192,36 +191,28 @@ export default class FileAdaptor {
 					);
 
 					if (!imgFile) {
-						console.log("not know path", node);
+						console.error("not know path", node);
 						break;
 					}
 
 					const fileData = new File(
 						[await this.app.vault.readBinary(imgFile)],
-						imgFile.name,
-						{
-							type: "image/png",
-						}
+						imgFile.name
 					);
 
 					formData.append("file", fileData);
-				} else if (pdfEmbed) {
-					const pdfFile = this.app.metadataCache.getFirstLinkpathDest(
-						src,
-						"."
-					);
+				} else if (pdfEmbed || videoEmbed) {
+					const fileEmbed =
+						this.app.metadataCache.getFirstLinkpathDest(src, ".");
 
-					if (!pdfFile) {
-						console.log("not know path", node);
+					if (!fileEmbed) {
+						console.error("not know path", node);
 						break;
 					}
 
 					const fileData = new File(
-						[await this.app.vault.readBinary(pdfFile)],
-						pdfFile.name,
-						{
-							type: "application/pdf",
-						}
+						[await this.app.vault.readBinary(fileEmbed)],
+						fileEmbed.name
 					);
 
 					formData.append("file", fileData);
@@ -237,23 +228,22 @@ export default class FileAdaptor {
 					extensions.fileId,
 					extensions.collectionName
 				);
-				builder.addItem(item);
-				item = null;
+				type = "block";
 				break;
 		}
 
-		if (item) {
+		if (item && type == "inline") {
 			const extraMarks = await this.findAllMarks(node, builder);
 
 			if (extraMarks.length > 0) {
 				item = {
 					...item,
-					marks: [...item.marks!, ...extraMarks],
+					marks: [...item.marks, ...extraMarks],
 				};
 			}
 		}
 
-		return item as MarkedElement;
+		return { item, type };
 	}
 
 	async findAllMarks(
@@ -371,32 +361,40 @@ export default class FileAdaptor {
 				break;
 			case "P":
 				const p = builder.paragraphItem();
+				let needsToAdd = false;
 
 				for (const _node of Array.from(node.childNodes)) {
 					const elementNode = _node as HTMLElement;
 
-					if (_node.nodeType == Node.TEXT_NODE) {
+					if (elementNode.nodeType == Node.TEXT_NODE) {
 						p.content.push(
 							builder.textItem(elementNode.textContent!)
 						);
-
+						needsToAdd = true;
 						continue;
 					}
 
-					if (_node.nodeType == Node.ELEMENT_NODE) {
-						let item = await this.findInlineElement(
-							_node as HTMLElement,
+					if (elementNode.nodeType == Node.ELEMENT_NODE) {
+						let { item, type } = await this.findNestedElement(
+							elementNode,
 							builder,
 							filePath
 						);
 
-						if (item) {
+						if (item && type == "inline") {
 							p.content.push(item!);
+							needsToAdd = true;
+						} else if (item) {
+							builder.addItem(p);
+							builder.addItem(item);
+							needsToAdd = false;
 						}
 					}
 				}
 
-				builder.addItem(p);
+				if (needsToAdd) {
+					builder.addItem(p);
+				}
 				break;
 
 			case "OL":
