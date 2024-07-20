@@ -1,4 +1,11 @@
-import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
+import {
+	Editor,
+	Notice,
+	Plugin,
+	TFile,
+	FileView,
+	MarkdownView,
+} from "obsidian";
 
 import { Obs2ConFluxSettingsTab } from "lib/settings";
 import { Obs2ConFluxSettings } from "lib/confluence/types";
@@ -7,6 +14,7 @@ import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "lib/adaptors/properties";
 import FileAdaptor from "lib/adaptors/file";
 import SpaceSearchModal from "lib/modal";
+import { toBlob, toPng } from "html-to-image";
 
 export default class Obs2ConFluxPlugin extends Plugin {
 	settings: Obs2ConFluxSettings;
@@ -36,9 +44,23 @@ export default class Obs2ConFluxPlugin extends Plugin {
 		});
 	}
 
+	getActiveCanvas(): any {
+		let currentView = this.app.workspace?.getActiveViewOfType(FileView);
+
+		if (currentView?.getViewType() !== "canvas") {
+			return null;
+		}
+
+		return (currentView as any)["canvas"];
+	}
+
 	async uploadFile(filePath: string, spaceId: string | null) {
-		const { atlassianUsername, atlassianApiToken, confluenceDomain } =
-			this.settings;
+		const {
+			atlassianUsername,
+			atlassianApiToken,
+			confluenceDomain,
+			followLinks,
+		} = this.settings;
 
 		if (!atlassianApiToken || !atlassianUsername || !confluenceDomain) {
 			new Notice(
@@ -94,11 +116,12 @@ export default class Obs2ConFluxPlugin extends Plugin {
 		const adf = await new FileAdaptor(
 			this.app,
 			client,
-			spaceId as string
+			spaceId as string,
+			followLinks
 		).convertObs2Adf(fileData, filePath || "");
 
 		client.page.updatePage({
-			pageId: Number(props.properties.pageId),
+			pageId: props.properties.pageId as string,
 			pageTitle: file.name.replace(".md", ""),
 			adf,
 		});

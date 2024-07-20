@@ -164,5 +164,17 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 					}
 				});
 			});
+
+		new Setting(containerEl)
+			.setName("Follow links")
+			.setDesc(
+				"Enabled to follow internal link and create those as confluence pages as well"
+			)
+			.addToggle((cb) => {
+				cb.onChange((value) => {
+					this.plugin.settings.followLinks = value;
+					this.plugin.saveSettings();
+				});
+			});
 	}
 }

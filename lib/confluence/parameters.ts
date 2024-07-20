@@ -18,19 +18,19 @@ export type SearchByCQL = {
 export type CreatePage = {
 	spaceId: string;
 	pageTitle: string;
-	parentId?: number;
+	parentId?: string;
 	adf?: AdfElement;
 };
 
 export type UpdatePage = {
-	pageId: number;
+	pageId: string;
 	pageTitle: string;
-	spaceId?: number;
-	parentId?: number;
-	ownerId?: number;
+	spaceId?: string;
+	parentId?: string;
+	ownerId?: string;
 	adf?: AdfElement[];
 };
 
 export type GetPageById = {
-	pageId: number;
+	pageId: string;
 };

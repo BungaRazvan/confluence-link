@@ -1,4 +1,4 @@
-import { concatenateUint8Arrays, removeUndefinedProperties } from "lib/utils";
+import { concatenateUint8Arrays } from "lib/utils";
 import { Client, RequestConfig, UploadResponse } from "./types";
 import { requestUrl } from "obsidian";
 
@@ -11,42 +11,36 @@ export class Attachements {
 		this.ATLASSIAN_TOKEN_CHECK_NOCHECK_VALUE = "no-check";
 	}
 
-	async uploadImage(
+	async uploadFile(
 		pageId: string,
-		imageBinary: ArrayBuffer,
-		imageName: string,
-		imageExtension: string
+		formData: FormData
 	): Promise<UploadResponse> {
+		formData.append("minorEdit", "true");
+
 		const config: RequestConfig = {
 			url: `rest/api/content/${pageId}/child/attachment`,
 			method: "PUT",
-			params: {
-				minorEdit: true,
-				imageName,
-				imageExtension,
-				imageBinary,
-			},
 		};
 
-		return await this.sendRequest(config);
+		return await this.sendRequest(config, formData);
 	}
 
-	async sendRequest(requestConfig: RequestConfig): Promise<any> {
+	async sendRequest(
+		requestConfig: RequestConfig,
+		formData: FormData
+	): Promise<any> {
 		const clientConfig = this.client.config;
-		const params = removeUndefinedProperties(requestConfig.params || {});
 
-		const creds = btoa(
+		const creds = Buffer.from(
 			`${clientConfig.authentication.email}:${clientConfig.authentication.apiToken}`
-		);
+		).toString("base64");
 		const url = new URL(`/wiki/${requestConfig.url}`, clientConfig.host);
 
 		const boundary = `----WebKitFormBoundary${Math.random()
 			.toString(36)
 			.substring(7)}`;
 
-		const imageBlob = new Blob([params.imageBinary], {
-			type: `image/${params.imageExtension}`,
-		});
+		const file = formData.get("file")! as File;
 
 		// Create the multipart form data manually
 		const formDataParts = [];
@@ -54,17 +48,17 @@ export class Attachements {
 		// Add file part
 		formDataParts.push(
 			`--${boundary}\r\n` +
-				`Content-Disposition: form-data; name="file"; filename="${params.imageName}.${params.imageExtension}"\r\n` +
-				`Content-Type: image/png\r\n\r\n`
+				`Content-Disposition: form-data; name="file"; filename="${file.name}"\r\n` +
+				`Content-Type: ${file.type}\r\n\r\n`
 		);
-		formDataParts.push(new Uint8Array(await imageBlob.arrayBuffer()));
+		formDataParts.push(new Uint8Array(await file.arrayBuffer()));
 		formDataParts.push(`\r\n`);
 
 		// Add minorEdit part
 		formDataParts.push(
 			`--${boundary}\r\n` +
 				`Content-Disposition: form-data; name="minorEdit"\r\n\r\n` +
-				`${params.minorEdit}\r\n`
+				`${formData.get("minorEdit")}\r\n`
 		);
 
 		// Add comment part

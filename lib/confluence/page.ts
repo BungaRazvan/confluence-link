@@ -37,7 +37,7 @@ export class Page {
 
 	async updatePage(parameters: UpdatePage): Promise<PageResponse> {
 		const pageResponse = await this.getPageById({
-			pageId: parameters.pageId,
+			pageId: parameters.pageId as string,
 		});
 
 		const config: RequestConfig = {
