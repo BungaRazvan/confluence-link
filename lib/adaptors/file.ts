@@ -145,6 +145,7 @@ export default class FileAdaptor {
 			case "SPAN":
 				const canvasEmbed = node.classList.contains("canvas-embed");
 				const imageEmbed = node.classList.contains("image-embed");
+				const pdfEmbed = node.classList.contains("pdf-embed");
 
 				const file = this.app.metadataCache.getFirstLinkpathDest(
 					filePath,
@@ -168,6 +169,10 @@ export default class FileAdaptor {
 					const canvasFile = this.app.vault.getFileByPath(
 						node.getAttr("src")!
 					);
+
+					console.log(canvasFile);
+
+					return;
 
 					await this.app.workspace.openLinkText(
 						node.getAttr("src")!,
@@ -204,6 +209,11 @@ export default class FileAdaptor {
 							imgFile.basename,
 							imgFile.extension
 						);
+				} else if (pdfEmbed) {
+				}
+
+				if (!attachmentResponse) {
+					break;
 				}
 
 				const { extensions } = attachmentResponse!.results[0];

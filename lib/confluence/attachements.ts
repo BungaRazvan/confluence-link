@@ -11,6 +11,8 @@ export class Attachements {
 		this.ATLASSIAN_TOKEN_CHECK_NOCHECK_VALUE = "no-check";
 	}
 
+	// async uploadPdf(): Promise<UploadResponse> {}
+
 	async uploadImage(
 		pageId: string,
 		imageBinary: ArrayBuffer,
@@ -35,9 +37,9 @@ export class Attachements {
 		const clientConfig = this.client.config;
 		const params = removeUndefinedProperties(requestConfig.params || {});
 
-		const creds = btoa(
+		const creds = Buffer.from(
 			`${clientConfig.authentication.email}:${clientConfig.authentication.apiToken}`
-		);
+		).toString("base64");
 		const url = new URL(`/wiki/${requestConfig.url}`, clientConfig.host);
 
 		const boundary = `----WebKitFormBoundary${Math.random()
