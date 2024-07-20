@@ -156,34 +156,28 @@ export default class FileAdaptor {
 					break;
 				}
 
+				const formData = new FormData();
 				const fileData = await this.app.vault.read(file);
 				const props = new PropertiesAdaptor().loadProperties(fileData);
 				const pageId = props.properties.pageId;
-				let attachmentResponse = null;
+				const src = node.getAttr("src")!;
 
 				if (canvasEmbed) {
 					if (!this.followLinks) {
 						return null;
 					}
 
-					const canvasFile = this.app.vault.getFileByPath(
-						node.getAttr("src")!
-					);
+					const canvasFile = this.app.vault.getFileByPath(src);
 
 					console.log(canvasFile);
 
 					return;
 
-					await this.app.workspace.openLinkText(
-						node.getAttr("src")!,
-						".",
-						true,
-						{
-							state: false,
-							eState: "hidden",
-							active: false,
-						}
-					);
+					await this.app.workspace.openLinkText(src!, ".", true, {
+						state: false,
+						eState: "hidden",
+						active: false,
+					});
 
 					console.log(
 						this.app.workspace.getLeavesOfType("canvas")[0].view
@@ -193,7 +187,7 @@ export default class FileAdaptor {
 					// this.app.workspace.detachLeavesOfType("canvas");
 				} else if (imageEmbed) {
 					const imgFile = this.app.metadataCache.getFirstLinkpathDest(
-						node.getAttr("src")!,
+						src,
 						"."
 					);
 
@@ -202,20 +196,42 @@ export default class FileAdaptor {
 						break;
 					}
 
-					attachmentResponse =
-						await this.client.attachement.uploadImage(
-							pageId as string,
-							await this.app.vault.readBinary(imgFile),
-							imgFile.basename,
-							imgFile.extension
-						);
+					const fileData = new File(
+						[await this.app.vault.readBinary(imgFile)],
+						imgFile.name,
+						{
+							type: "image/png",
+						}
+					);
+
+					formData.append("file", fileData);
 				} else if (pdfEmbed) {
+					const pdfFile = this.app.metadataCache.getFirstLinkpathDest(
+						src,
+						"."
+					);
+
+					if (!pdfFile) {
+						console.log("not know path", node);
+						break;
+					}
+
+					const fileData = new File(
+						[await this.app.vault.readBinary(pdfFile)],
+						pdfFile.name,
+						{
+							type: "application/pdf",
+						}
+					);
+
+					formData.append("file", fileData);
 				}
 
-				if (!attachmentResponse) {
-					break;
-				}
-
+				const attachmentResponse =
+					await this.client.attachement.uploadFile(
+						pageId as string,
+						formData
+					);
 				const { extensions } = attachmentResponse!.results[0];
 				item = builder.mediaSingleItem(
 					extensions.fileId,
