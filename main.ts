@@ -119,6 +119,7 @@ export default class Obs2ConFluxPlugin extends Plugin {
 			spaceId as string,
 			followLinks
 		).convertObs2Adf(fileData, filePath || "");
+		console.log(adf);
 
 		client.page.updatePage({
 			pageId: props.properties.pageId as string,

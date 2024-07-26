@@ -48,8 +48,8 @@ export class Attachements {
 		// Add file part
 		formDataParts.push(
 			`--${boundary}\r\n` +
-				`Content-Disposition: form-data; name="file"; filename="${file.name}"\r\n` +
-				`Content-Type: ${file.type}\r\n\r\n`
+				`Content-Disposition: form-data; name="file"; filename="${file.name}"\r\n\r\n`
+			// `Content-Type: ${file.type}\r\n\r\n`
 		);
 		formDataParts.push(new Uint8Array(await file.arrayBuffer()));
 		formDataParts.push(`\r\n`);
