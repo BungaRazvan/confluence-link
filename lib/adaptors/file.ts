@@ -97,7 +97,7 @@ export default class FileAdaptor {
 		builder: ADFBuilder,
 		filePath: string
 	): Promise<Record<string, any>> {
-		let item = null;
+		let item: any = null;
 		let type = null;
 
 		switch (node.nodeName) {
@@ -178,11 +178,10 @@ export default class FileAdaptor {
 						active: false,
 					});
 
-					console.log(
-						this.app.workspace.getLeavesOfType("canvas")[0].view
-							.contentEl
-					);
-
+					// console.log(
+					// 	this.app.workspace.getLeavesOfType("canvas")[0].view
+					// 		.contentEl
+					// );
 					// this.app.workspace.detachLeavesOfType("canvas");
 				} else if (imageEmbed) {
 					const imgFile = this.app.metadataCache.getFirstLinkpathDest(
@@ -238,7 +237,8 @@ export default class FileAdaptor {
 			if (extraMarks.length > 0) {
 				item = {
 					...item,
-					marks: [...item.marks, ...extraMarks],
+					// @ts-nocheck
+					marks: [...item.marks, ...extraMarks], // @ts-nocheck
 				};
 			}
 		}
