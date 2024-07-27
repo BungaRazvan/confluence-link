@@ -6,7 +6,7 @@ Welcome to the `Obs2Con Flux` project. The objective of this project is to make 
 
 1. Open the plugin settings and configure the following fields:
 
--   `Confluence Domnain`: The URL of your Atlassian Confluence instance
+-   `Confluence Domain`: The URL of your Atlassian Confluence instance
 -   `Atlassian User Name`: Your Atlassian account's email address
 -   `Atlassian API Token`: Your Atlassian API token. You can generate one from your [Atlassian Account Settings](https://id.atlassian.com/manage-profile/security/api-tokens).
 -   (Optional) `Confluence Default Space`: The space identifier where all you confluence pages will be created
