@@ -1,14 +1,14 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
-import Obs2ConFluxPlugin from "main";
+import ConfluenceLinkPlugin from "main";
 
 import ConfluenceClient from "./confluence/client";
 import SpaceSearchModal from "./modal";
 import { isFloat } from "./utils";
 
-export class Obs2ConFluxSettingsTab extends PluginSettingTab {
-	plugin: Obs2ConFluxPlugin;
+export class ConfluenceLinkSettingsTab extends PluginSettingTab {
+	plugin: ConfluenceLinkPlugin;
 
-	constructor(app: App, plugin: Obs2ConFluxPlugin) {
+	constructor(app: App, plugin: ConfluenceLinkPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -17,13 +17,9 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", {
-			text: "Settings for connecting to Atlassian",
-		});
-
 		new Setting(containerEl)
-			.setName("Confluence Domain")
-			.setDesc("Confluence Domain eg: https://test.attlasian.net")
+			.setName("Confluence domain")
+			.setDesc("Confluence domain eg: https://test.attlasian.net")
 			.addText((text) =>
 				text
 					.setValue(this.plugin.settings.confluenceDomain)
@@ -34,7 +30,7 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Atlassian Username")
+			.setName("Atlassian username")
 			.setDesc("eg: user@domain.com")
 			.addText((text) => {
 				text.setValue(this.plugin.settings.atlassianUsername).onChange(
@@ -46,8 +42,8 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Atlassian API Token")
-			.setDesc("API token")
+			.setName("Atlassian api token")
+			.setDesc("Api token")
 			.addText((text) => {
 				text.setValue(this.plugin.settings.atlassianApiToken).onChange(
 					async (value) => {
@@ -99,7 +95,7 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 		);
 
 		new Setting(containerEl)
-			.setName("Confluence Default Space")
+			.setName("Confluence default space")
 			.setDesc("Default spaceId to save the files")
 			.addExtraButton((button) => {
 				button
@@ -144,7 +140,7 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 					});
 			})
 			.addText((text) => {
-				let wait: NodeJS.Timeout | null = null;
+				let wait: number | null = null;
 
 				text.setValue(
 					this.plugin.settings.confluenceDefaultSpaceId
@@ -154,10 +150,10 @@ export class Obs2ConFluxSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					} else {
 						if (wait) {
-							clearTimeout(wait);
+							window.clearTimeout(wait);
 						}
 
-						wait = setTimeout(() => {
+						wait = window.setTimeout(() => {
 							this.display();
 							new Notice("Please enter a valid space id.");
 						}, 500);

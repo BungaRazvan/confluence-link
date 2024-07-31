@@ -1,4 +1,4 @@
-export interface Obs2ConFluxSettings {
+export interface ConfluenceLinkSettings {
 	confluenceDomain: string;
 	atlassianUsername: string;
 	atlassianApiToken: string;

@@ -7,8 +7,8 @@ import {
 	MarkdownView,
 } from "obsidian";
 
-import { Obs2ConFluxSettingsTab } from "lib/settings";
-import { Obs2ConFluxSettings } from "lib/confluence/types";
+import { ConfluenceLinkSettingsTab } from "lib/settings";
+import { ConfluenceLinkSettings } from "lib/confluence/types";
 
 import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "lib/adaptors/properties";
@@ -16,13 +16,13 @@ import FileAdaptor from "lib/adaptors/file";
 import SpaceSearchModal from "lib/modal";
 import { toBlob, toPng } from "html-to-image";
 
-export default class Obs2ConFluxPlugin extends Plugin {
-	settings: Obs2ConFluxSettings;
+export default class ConfluenceLink extends Plugin {
+	settings: ConfluenceLinkSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		this.addSettingTab(new Obs2ConFluxSettingsTab(this.app, this));
+		this.addSettingTab(new ConfluenceLinkSettingsTab(this.app, this));
 
 		// Register commands
 		this.addCommand({
@@ -119,7 +119,6 @@ export default class Obs2ConFluxPlugin extends Plugin {
 			spaceId as string,
 			followLinks
 		).convertObs2Adf(fileData, filePath || "");
-		console.log(adf);
 
 		client.page.updatePage({
 			pageId: props.properties.pageId as string,

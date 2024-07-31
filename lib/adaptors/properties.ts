@@ -1,5 +1,5 @@
-import { load, JSON_SCHEMA } from "js-yaml";
-import { map, isArray, isDate, isEmpty } from "lodash";
+import { isEmpty } from "lodash";
+import { stringify, parse } from "yaml";
 
 export interface PropsType {
 	tags?: string | boolean | Array<string | boolean>;
@@ -28,9 +28,7 @@ export default class PropertiesAdaptor {
 
 		const existingFrontMatter = frontMatterMatch[1].trim();
 		// Parse the existing YAML front matter into an object
-		const existingFrontMatterObject = load(existingFrontMatter, {
-			schema: JSON_SCHEMA,
-		}) as { [key: string]: any };
+		const existingFrontMatterObject = parse(existingFrontMatter);
 
 		if (existingFrontMatterObject) {
 			this.properties = existingFrontMatterObject;
@@ -56,39 +54,12 @@ export default class PropertiesAdaptor {
 		}
 
 		if (!frontMatterMatch) {
-			return `---\n${this.serializeProperties()}\n---\n${str}`;
+			return `---\n${stringify(this.properties)}}\n---\n${str}`;
 		}
 
 		return str.replace(
 			frontMatterMatch[0],
-			`---\n${this.serializeProperties()}\n---\n`
+			`---\n${stringify(this.properties)}\n---\n`
 		);
-	}
-
-	private serializeProperties(): string {
-		return map(this.properties, (value, key) => {
-			if (value === undefined) {
-				return "\n";
-			} else if (key == "tags") {
-				if (isArray(value)) {
-					return `tags:\n${map(
-						value,
-						(item) => ` - \"${item}\"`
-					).join("\n")}`;
-				} else {
-					return `tags:\n - \"${value}\"`;
-				}
-			} else if (isArray(value)) {
-				return `${key}:\n${map(value, (item) => `  - "${item}"`).join(
-					"\n"
-				)}`;
-			} else if (isBoolean(value)) {
-				return `${key}: ${value}`;
-			} else if (isDate(value)) {
-				return `${key}: ${value.toISOString()}`;
-			} else {
-				return `${key}: ${value}`;
-			}
-		}).join("\n");
 	}
 }
