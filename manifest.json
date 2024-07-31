@@ -1,6 +1,6 @@
 {
-	"id": "obs2con-flux",
-	"name": "Obs2Con Flux",
+	"id": "confluence-link",
+	"name": "Confluence Link",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Upload files to confluence pages",
