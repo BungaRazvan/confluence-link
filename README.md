@@ -23,6 +23,10 @@ Welcome to the `Confluence Link` project. The objective of this project is to ma
 ## Usage
 
 1. Open a md file
-2. Press the hotkey set at step 2 in [Settings things up](#Setting-things-up) section or use the command pallet (`Ctrl/Cmd + P` ) and search for `Obs2Con Flux` commands to execute
+2. Press the hotkey set at step 2 in [Settings things up](#Setting-things-up) section or use the command pallet (`Ctrl/Cmd + P` ) and search for `Confluence Link` commands to execute
 
 ![Commands](./images/commands.png)
+
+## Issues
+
+Please log issues or feature requests to https://github.com/BungaRazvan/confluence-link/issues as this is where the code is being developed
