@@ -34,6 +34,7 @@ export default class FileAdaptor {
 			new Component()
 		);
 
+		// console.log(container);
 		return await this.htmlToAdf(container, path);
 	}
 
@@ -50,7 +51,7 @@ export default class FileAdaptor {
 		return builder.build();
 	}
 
-	async getInternalLink(path: string): Promise<string> {
+	async getConfluenceLink(path: string): Promise<string> {
 		const file = this.app.metadataCache.getFirstLinkpathDest(path, ".");
 
 		if (!(file instanceof TFile)) {
@@ -99,20 +100,27 @@ export default class FileAdaptor {
 
 		switch (node.nodeName) {
 			case "A":
-				if (!this.followLinks) {
+				const linkEl = node as HTMLAnchorElement;
+				const linkText = node.textContent!;
+
+				// TODO add tag/label support
+				if (linkEl.classList.contains("tag")) {
 					break;
 				}
 
-				const linkEl = node as HTMLAnchorElement;
-				const linkText = node.textContent!;
+				if (!this.followLinks) {
+					break;
+				}
 
 				const href = await this.findLink(linkEl);
 
 				if (
 					linkEl.classList.contains("internal-link") &&
-					linkEl.getAttr("href") == linkText.replaceAll(" > ", "#")
+					linkEl.getAttr("href") == linkEl.getAttr("data-href")
 				) {
-					return builder.cardItem(href);
+					item = builder.cardItem(href);
+					type = "inline";
+					break;
 				}
 
 				item = builder.linkItem(linkText, href);
@@ -305,7 +313,7 @@ export default class FileAdaptor {
 
 				if (newPageLink) {
 					href =
-						(await this.getInternalLink(paths[0] + ".md")) +
+						(await this.getConfluenceLink(paths[0] + ".md")) +
 						"#" +
 						paths[1];
 
@@ -314,7 +322,9 @@ export default class FileAdaptor {
 					href = dataLink.replaceAll(" ", "-");
 				}
 			} else {
-				href = await this.getInternalLink(linkEl.dataset.href! + ".md");
+				href = await this.getConfluenceLink(
+					linkEl.dataset.href! + ".md"
+				);
 			}
 		}
 
@@ -411,6 +421,7 @@ export default class FileAdaptor {
 						return builder.listItem(li.textContent!);
 					}
 				);
+
 				if (isTaskList) {
 					builder.addItem(
 						builder.taskListItem(listItems as TaskItemElement[])
