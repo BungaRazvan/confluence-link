@@ -83,6 +83,7 @@ export default class ConfluenceLink extends Plugin {
 				apiToken: atlassianApiToken,
 			},
 		});
+
 		const props = new PropertiesAdaptor().loadProperties(fileData);
 		const { pageId } = props.properties;
 

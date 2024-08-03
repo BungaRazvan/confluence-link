@@ -1,6 +1,6 @@
 {
-	"name": "obs2con-flux",
-	"version": "1.0.0",
+	"name": "confluence-link",
+	"version": "1.0.1",
 	"description": "Sync obsidian files with confluence pages",
 	"main": "main.js",
 	"scripts": {

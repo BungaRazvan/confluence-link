@@ -26,7 +26,9 @@ export default class PropertiesAdaptor {
 			return this;
 		}
 
-		const existingFrontMatter = frontMatterMatch[1].trim();
+		const existingFrontMatter = frontMatterMatch[1]
+			.trim()
+			.replaceAll("}", "");
 		// Parse the existing YAML front matter into an object
 		const existingFrontMatterObject = parse(existingFrontMatter);
 
@@ -54,7 +56,7 @@ export default class PropertiesAdaptor {
 		}
 
 		if (!frontMatterMatch) {
-			return `---\n${stringify(this.properties)}}\n---\n${str}`;
+			return `---\n${stringify(this.properties)}\n---\n${str}`;
 		}
 
 		return str.replace(

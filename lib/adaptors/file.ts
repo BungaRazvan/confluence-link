@@ -3,9 +3,7 @@ import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
 import ADFBuilder from "../builder/adf";
 import {
 	AdfElement,
-	CardElementLink,
 	ListItemElement,
-	MarkedElement,
 	MarksList,
 	TaskItemElement,
 } from "lib/builder/types";
