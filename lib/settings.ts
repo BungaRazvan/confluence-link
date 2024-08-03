@@ -84,9 +84,9 @@ export class ConfluenceLinkSettingsTab extends PluginSettingTab {
 					await client.search.searchByCQL({
 						cql: "id != 0 order by lastmodified desc",
 					});
-					new Notice("Obs2Con Flux: Connection established!");
+					new Notice("Confluence Link: Connection established!");
 				} catch (e) {
-					new Notice("Obs2Con Flux: Connection failed!");
+					new Notice("Confluence Link: Connection failed!");
 				}
 
 				button.setButtonText("Test Connection");

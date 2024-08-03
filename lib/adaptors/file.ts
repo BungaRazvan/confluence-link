@@ -1,6 +1,6 @@
 import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
 
-import ADFBuilder from "../builder/adf";
+import ADFBuilder from "lib/builder/adf";
 import {
 	AdfElement,
 	ListItemElement,
@@ -9,6 +9,7 @@ import {
 } from "lib/builder/types";
 import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "./properties";
+import ParagraphDirector from "lib/directors/paragraph";
 
 export default class FileAdaptor {
 	constructor(
@@ -34,8 +35,10 @@ export default class FileAdaptor {
 			new Component()
 		);
 
-		// console.log(container);
-		return await this.htmlToAdf(container, path);
+		console.log(container);
+		const adf = await this.htmlToAdf(container, path);
+		console.log(adf);
+		return adf;
 	}
 
 	async htmlToAdf(
@@ -166,8 +169,13 @@ export default class FileAdaptor {
 				const imageEmbed = node.classList.contains("image-embed");
 				const pdfEmbed = node.classList.contains("pdf-embed");
 				const videoEmbed = node.classList.contains("video-embed");
+				const modEmpty = node.classList.contains(
+					"mod-empty-attachment"
+				);
 
-				if (canvasEmbed) {
+				if (modEmpty) {
+					break;
+				} else if (canvasEmbed) {
 					// TODO figure out canvas
 					break;
 
@@ -242,7 +250,6 @@ export default class FileAdaptor {
 			if (extraMarks.length > 0) {
 				item = {
 					...item,
-					// @ts-nocheck
 					marks: [...item.marks, ...extraMarks], // @ts-nocheck
 				};
 			}
@@ -310,6 +317,7 @@ export default class FileAdaptor {
 			if (dataLink.contains("#")) {
 				const paths = dataLink.split("#");
 				const newPageLink = paths.length > 1;
+				console.log(paths, paths.length, newPageLink);
 
 				if (newPageLink) {
 					href =
@@ -368,6 +376,20 @@ export default class FileAdaptor {
 				break;
 			case "P":
 				const p = builder.paragraphItem();
+				const paragraphDirector = new ParagraphDirector(
+					builder,
+					this,
+					this.app,
+					this.client
+				);
+				await paragraphDirector.addItems(
+					node as HTMLParagraphElement,
+					filePath,
+					this.followLinks
+				);
+
+				break;
+
 				let needsToAdd = false;
 
 				for (const _node of Array.from(node.childNodes)) {
