@@ -35,9 +35,7 @@ export default class FileAdaptor {
 			new Component()
 		);
 
-		console.log(container);
 		const adf = await this.htmlToAdf(container, path);
-		console.log(adf);
 		return adf;
 	}
 
@@ -388,42 +386,6 @@ export default class FileAdaptor {
 					this.followLinks
 				);
 
-				break;
-
-				let needsToAdd = false;
-
-				for (const _node of Array.from(node.childNodes)) {
-					const elementNode = _node as HTMLElement;
-
-					if (elementNode.nodeType == Node.TEXT_NODE) {
-						p.content.push(
-							builder.textItem(elementNode.textContent!)
-						);
-						needsToAdd = true;
-						continue;
-					}
-
-					if (elementNode.nodeType == Node.ELEMENT_NODE) {
-						let { item, type } = await this.findNestedElement(
-							elementNode,
-							builder,
-							filePath
-						);
-
-						if (item && type == "inline") {
-							p.content.push(item!);
-							needsToAdd = true;
-						} else if (item) {
-							builder.addItem(p);
-							builder.addItem(item);
-							needsToAdd = false;
-						}
-					}
-				}
-
-				if (needsToAdd) {
-					builder.addItem(p);
-				}
 				break;
 
 			case "OL":

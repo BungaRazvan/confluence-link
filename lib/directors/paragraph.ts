@@ -5,7 +5,6 @@ import FileAdaptor from "lib/adaptors/file";
 import MediaDirector from "./media";
 import { App } from "obsidian";
 import ConfluenceClient from "lib/confluence/client";
-import { drop } from "lodash";
 
 class ParagraphDirector {
 	constructor(
@@ -20,8 +19,6 @@ class ParagraphDirector {
 		filePath: string,
 		followLinks: boolean
 	) {
-		console.log(filePath, "^");
-
 		const pItem = this.builder.paragraphItem();
 
 		for (const innerNode of Array.from(node.childNodes)) {
