@@ -4,6 +4,7 @@ export interface ConfluenceLinkSettings {
 	atlassianApiToken: string;
 	confluenceDefaultSpaceId: string;
 	followLinks: boolean;
+	uploadTags: boolean;
 }
 
 export interface Config {

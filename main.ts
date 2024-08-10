@@ -15,6 +15,8 @@ import PropertiesAdaptor from "lib/adaptors/properties";
 import FileAdaptor from "lib/adaptors/file";
 import SpaceSearchModal from "lib/modal";
 import { toBlob, toPng } from "html-to-image";
+import Label from "lib/confluence/label";
+import LabelDirector from "lib/directors/label";
 
 export default class ConfluenceLink extends Plugin {
 	settings: ConfluenceLinkSettings;
@@ -55,12 +57,8 @@ export default class ConfluenceLink extends Plugin {
 	}
 
 	async uploadFile(filePath: string, spaceId: string | null) {
-		const {
-			atlassianUsername,
-			atlassianApiToken,
-			confluenceDomain,
-			followLinks,
-		} = this.settings;
+		const { atlassianUsername, atlassianApiToken, confluenceDomain } =
+			this.settings;
 
 		if (!atlassianApiToken || !atlassianUsername || !confluenceDomain) {
 			new Notice(
@@ -84,8 +82,8 @@ export default class ConfluenceLink extends Plugin {
 			},
 		});
 
-		const props = new PropertiesAdaptor().loadProperties(fileData);
-		const { pageId } = props.properties;
+		const propAdaptor = new PropertiesAdaptor().loadProperties(fileData);
+		const { pageId, tags } = propAdaptor.properties;
 
 		let response = null;
 
@@ -104,7 +102,7 @@ export default class ConfluenceLink extends Plugin {
 				pageTitle: file.name.replace(".md", ""),
 			});
 
-			props.addProperties({
+			propAdaptor.addProperties({
 				pageId: response.id,
 				spaceId: response.spaceId,
 				confluenceUrl: response._links.base + response._links.webui,
@@ -112,20 +110,27 @@ export default class ConfluenceLink extends Plugin {
 		}
 
 		// Write the updated content back to the Obsidian file
-		await this.app.vault.modify(file, props.toFile(fileData));
+		await this.app.vault.modify(file, propAdaptor.toFile(fileData));
 
 		const adf = await new FileAdaptor(
 			this.app,
 			client,
 			spaceId as string,
-			followLinks
+			this.settings
 		).convertObs2Adf(fileData, filePath || "");
 
 		client.page.updatePage({
-			pageId: props.properties.pageId as string,
+			pageId: propAdaptor.properties.pageId as string,
 			pageTitle: file.name.replace(".md", ""),
 			adf,
 		});
+
+		if (tags) {
+			new LabelDirector(this.app, client).addTags(
+				filePath,
+				this.settings.uploadTags
+			);
+		}
 
 		new Notice(`File uploaded to confluence`);
 	}

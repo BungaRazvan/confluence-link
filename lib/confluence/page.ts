@@ -1,7 +1,7 @@
 import { Client, PageResponse, GetPagesResponse, RequestConfig } from "./types";
 import { CreatePage, UpdatePage, GetPageById } from "./parameters";
 
-export class Page {
+export default class Page {
 	constructor(private client: Client) {}
 
 	async createPage(parameters: CreatePage): Promise<PageResponse> {

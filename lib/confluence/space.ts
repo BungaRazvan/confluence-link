@@ -1,6 +1,6 @@
 import { Client, RequestConfig, SpaceResponse } from "./types";
 
-export class Space {
+export default class Space {
 	constructor(private client: Client) {}
 
 	async getSpaces(): Promise<SpaceResponse> {

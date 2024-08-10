@@ -1,5 +1,5 @@
 import { requestUrl } from "obsidian";
-import { map, isEmpty, compact } from "lodash";
+import { map, isEmpty, compact, isArray } from "lodash";
 import { Config, RequestConfig, ObsidianRequestParams } from "./types";
 import { removeUndefinedProperties } from "lib/utils";
 
@@ -50,7 +50,12 @@ export default class BaseClient {
 
 		const method = requestConfig.method;
 		const url = new URL(`/wiki/${requestConfig.url}`, this.config.host);
-		const params = removeUndefinedProperties(requestConfig.params || {});
+		let params = requestConfig.params;
+
+		if (!isArray(params)) {
+			params = removeUndefinedProperties(params || {});
+		}
+
 		const requestParams: ObsidianRequestParams = {
 			url: url.toString(),
 			method,

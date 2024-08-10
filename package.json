@@ -1,7 +1,7 @@
 {
 	"name": "confluence-link",
 	"version": "1.0.2",
-	"description": "Sync obsidian files with confluence pages",
+	"description": "Publish obsidian files to confluence pages",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

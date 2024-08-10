@@ -1,7 +1,7 @@
 import { Client, RequestConfig, SearchResponse } from "./types";
 import { SearchByCQL } from "./parameters";
 
-export class Search {
+export default class Search {
 	constructor(private client: Client) {}
 
 	async searchByCQL(parameters: SearchByCQL): Promise<SearchResponse> {
