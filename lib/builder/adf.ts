@@ -253,18 +253,6 @@ export default class ADFBuilder {
 		};
 	}
 
-	labelItem() {
-		return {
-			type: "inlineExtension",
-			attrs: {
-				extensionKey: "custom-tag",
-				parameters: {
-					tags: ["example", "tag1", "tag2"],
-				},
-			},
-		};
-	}
-
 	markLink(href: string): LinkMarkElement {
 		return {
 			type: "link",

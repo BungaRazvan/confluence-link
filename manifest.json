@@ -1,7 +1,7 @@
 {
 	"id": "confluence-link",
 	"name": "Confluence Link",
-	"version": "1.0.2",
+	"version": "1.1.5",
 	"minAppVersion": "0.15.0",
 	"description": "Upload files to confluence pages",
 	"author": "Razvan Bunga",

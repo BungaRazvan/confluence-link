@@ -13,7 +13,6 @@ class MediaDirector {
 
 	async build_item(node: HTMLSpanElement, filePath: string) {
 		const modEmpty = node.classList.contains("mod-empty-attachment");
-		console.log(modEmpty, node);
 
 		if (modEmpty) {
 			return null;

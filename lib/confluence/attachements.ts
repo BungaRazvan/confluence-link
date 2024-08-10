@@ -2,7 +2,7 @@ import { concatenateUint8Arrays } from "lib/utils";
 import { Client, RequestConfig, UploadResponse } from "./types";
 import { requestUrl } from "obsidian";
 
-export class Attachements {
+export default class Attachements {
 	ATLASSIAN_TOKEN_CHECK_FLAG: string;
 	ATLASSIAN_TOKEN_CHECK_NOCHECK_VALUE: string;
 

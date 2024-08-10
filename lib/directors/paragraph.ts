@@ -1,25 +1,36 @@
-import ADFBuilder from "lib/builder/adf";
-import { MarksList } from "lib/builder/types";
-import LinkDirector from "./link";
-import FileAdaptor from "lib/adaptors/file";
-import MediaDirector from "./media";
 import { App } from "obsidian";
+import { MarksList } from "lib/builder/types";
+
+import ADFBuilder from "lib/builder/adf";
+import FileAdaptor from "lib/adaptors/file";
 import ConfluenceClient from "lib/confluence/client";
+
+import MediaDirector from "./media";
+import LabelDirector from "./label";
+import LinkDirector from "./link";
+import { ConfluenceLinkSettings } from "lib/confluence/types";
 
 class ParagraphDirector {
 	constructor(
 		private readonly builder: ADFBuilder,
 		private readonly fileAdaptor: FileAdaptor,
 		private readonly app: App,
-		private readonly client: ConfluenceClient
+		private readonly client: ConfluenceClient,
+		private readonly settings: ConfluenceLinkSettings
 	) {}
 
-	async addItems(
-		node: HTMLParagraphElement,
-		filePath: string,
-		followLinks: boolean
-	) {
+	async addItems(node: HTMLParagraphElement, filePath: string) {
 		const pItem = this.builder.paragraphItem();
+		const tags = node.querySelectorAll('a[class="tag"]');
+
+		if (tags.length > 0 && tags.length == node.children.length) {
+			new LabelDirector(this.app, this.client).addTags(
+				filePath,
+				this.settings.uploadTags,
+				tags as unknown as Array<HTMLAnchorElement>
+			);
+			return;
+		}
 
 		for (const innerNode of Array.from(node.childNodes)) {
 			if (innerNode.nodeType === Node.TEXT_NODE) {
@@ -33,8 +44,7 @@ class ParagraphDirector {
 				innerNode.nodeName !== "SPAN"
 			) {
 				const nestedItem = await this.findNestedItem(
-					innerNode as HTMLElement,
-					followLinks
+					innerNode as HTMLElement
 				);
 
 				if (nestedItem) {
@@ -70,7 +80,7 @@ class ParagraphDirector {
 		this.builder.addItem(pItem);
 	}
 
-	async findNestedItem(node: HTMLElement, followLinks: boolean) {
+	async findNestedItem(node: HTMLElement) {
 		let item: any = null;
 
 		switch (node.nodeName) {
@@ -78,7 +88,10 @@ class ParagraphDirector {
 				item = await new LinkDirector(
 					this.builder,
 					this.fileAdaptor
-				).build_item(node as HTMLAnchorElement, followLinks);
+				).build_item(
+					node as HTMLAnchorElement,
+					this.settings.followLinks
+				);
 				break;
 			case "STRONG":
 				item = this.builder.strongItem(node.textContent!);

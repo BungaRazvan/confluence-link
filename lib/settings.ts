@@ -164,11 +164,27 @@ export class ConfluenceLinkSettingsTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Follow links")
 			.setDesc(
-				"Enabled to follow internal link and create those as confluence pages as well"
+				"Enable to follow internal links and create those as confluence pages as well"
 			)
 			.addToggle((cb) => {
+				cb.setValue(this.plugin.settings.followLinks || false);
+
 				cb.onChange((value) => {
 					this.plugin.settings.followLinks = value;
+					this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Upload tags")
+			.setDesc(
+				"Enable to add the tags from the obsidian file to the confluence page as well"
+			)
+			.addToggle((cb) => {
+				cb.setValue(this.plugin.settings.uploadTags || false);
+
+				cb.onChange((value) => {
+					this.plugin.settings.uploadTags = value;
 					this.plugin.saveSettings();
 				});
 			});

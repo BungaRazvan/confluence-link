@@ -1,8 +1,11 @@
-import { isEmpty } from "lodash";
+import { difference, isEmpty } from "lodash";
 import { stringify, parse } from "yaml";
 
 export interface PropsType {
-	tags?: string | boolean | Array<string | boolean>;
+	tags?: Array<string>;
+	pageId?: string;
+	spaceId?: string;
+	confluenceUrl?: string;
 	[key: string]:
 		| boolean
 		| Array<string | number | Date | boolean>
@@ -45,6 +48,21 @@ export default class PropertiesAdaptor {
 			...props,
 		};
 
+		return this;
+	}
+
+	addTags(tags: Array<string>): PropertiesAdaptor {
+		const props = { ...this.properties };
+		const propTags = props.tags;
+
+		if (isEmpty(propTags)) {
+			this.addProperties({ tags: tags });
+			return this;
+		}
+
+		const newTags = difference(tags, propTags!);
+
+		this.addProperties({ tags: propTags!.concat(newTags) });
 		return this;
 	}
 

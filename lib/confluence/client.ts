@@ -1,9 +1,10 @@
 import BaseClient from "./base";
-import { Search } from "./search";
-import { Page } from "./page";
-import { Space } from "./space";
+import Search from "./search";
+import Page from "./page";
+import Space from "./space";
 import { Client, Config } from "./types";
-import { Attachements } from "./attachements";
+import Attachements from "./attachements";
+import Label from "./label";
 
 export default class ConfluenceClient extends BaseClient {
 	config: Config;
@@ -16,4 +17,5 @@ export default class ConfluenceClient extends BaseClient {
 	page = new Page(this as Client);
 	space = new Space(this as Client);
 	attachement = new Attachements(this as Client);
+	label = new Label(this as Client);
 }
