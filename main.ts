@@ -5,6 +5,7 @@ import {
 	TFile,
 	FileView,
 	MarkdownView,
+	setIcon,
 } from "obsidian";
 
 import { ConfluenceLinkSettingsTab } from "lib/settings";
@@ -15,7 +16,6 @@ import PropertiesAdaptor from "lib/adaptors/properties";
 import FileAdaptor from "lib/adaptors/file";
 import SpaceSearchModal from "lib/modal";
 import { toBlob, toPng } from "html-to-image";
-import Label from "lib/confluence/label";
 import LabelDirector from "lib/directors/label";
 
 export default class ConfluenceLink extends Plugin {
@@ -30,20 +30,67 @@ export default class ConfluenceLink extends Plugin {
 		this.addCommand({
 			id: "upload-file-to-confluence",
 			name: "Upload file to confluence using default space",
-			editorCallback: async (editor: Editor, ctx: MarkdownView) => {
+			editorCallback: (editor: Editor, ctx: MarkdownView) => {
 				const { confluenceDefaultSpaceId } = this.settings;
 
-				this.uploadFile(ctx.file?.path || "", confluenceDefaultSpaceId);
+				this.addProgress(
+					async () =>
+						this.uploadFile(
+							ctx.file?.path || "",
+							confluenceDefaultSpaceId
+						),
+					ctx.file?.name!
+				);
 			},
 		});
 
 		this.addCommand({
 			id: "upload-file-to-space",
 			name: "Upload file to space",
-			editorCallback: async (editor: Editor, ctx: MarkdownView) => {
-				this.uploadFile(ctx.file?.path || "", null);
+			editorCallback: (editor: Editor, ctx: MarkdownView) => {
+				this.addProgress(
+					async () => this.uploadFile(ctx.file?.path || "", null),
+					ctx.file?.name!
+				);
 			},
 		});
+	}
+
+	async addProgress(callback: Function, filename: string) {
+		const statusBar = this.addStatusBarItem();
+
+		setIcon(statusBar, "loader");
+		const loader = statusBar.querySelector("svg")!;
+
+		statusBar.createEl("span", {
+			text: `Uploading ${filename}`,
+			attr: { style: "padding-rigth: 10px" },
+		});
+		loader.animate(
+			[
+				{
+					// from
+					transform: "rotate(0deg)",
+				},
+				{
+					// to
+					transform: "rotate(360deg)",
+				},
+			],
+			{
+				duration: 2000,
+				iterations: Infinity, // Repeat the animation infinitely
+			}
+		);
+
+		try {
+			await callback();
+		} catch {
+			statusBar.detach();
+			return;
+		}
+
+		statusBar.detach();
 	}
 
 	getActiveCanvas(): any {
