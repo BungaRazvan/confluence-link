@@ -27,6 +27,16 @@ Welcome to the `Confluence Link` project. The objective of this project is to ma
 
 ![Commands](./images/commands.png)
 
+## Nice To Know
+
+While the spaces modal is opened you can mark or unmark spaces as favorites by clicking the star icon. This will make them appear as the first results the next time you open this modal.
+
+![Favorite_Spaces](./images/fav_spaces.png)
+
+If a space is not in the initial list you can type `??` followed by the space title for a "fuzzy search" using all the spaces you have access to, not just the up to 250 that the confluence API can return in one request.
+
+![Search](./images/search_spaces.png)
+
 ## Issues
 
 Please log issues or feature requests to https://github.com/BungaRazvan/confluence-link/issues as this is where the code is being developed

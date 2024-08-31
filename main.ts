@@ -136,7 +136,7 @@ export default class ConfluenceLink extends Plugin {
 
 		if (!spaceId && !pageId) {
 			await new Promise<void>((resolve) => {
-				new SpaceSearchModal(this.app, client, (result) => {
+				new SpaceSearchModal(this.app, this, client, (result) => {
 					spaceId = result.id;
 					resolve();
 				}).open();
@@ -185,7 +185,7 @@ export default class ConfluenceLink extends Plugin {
 	async onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, await this.loadData());
+		this.settings = Object.assign({ favSpaces: [] }, await this.loadData());
 	}
 
 	async saveSettings() {

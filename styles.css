@@ -1,0 +1,14 @@
+.space-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.space-container .fav-icon {
+	color: var(--color-yellow);
+	cursor: pointer;
+}
+
+.space-container .fav-icon.is-fav > svg {
+	fill: var(--color-yellow);
+}

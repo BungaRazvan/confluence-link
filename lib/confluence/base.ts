@@ -78,11 +78,8 @@ export default class BaseClient {
 			throw: false,
 		});
 
-		console.log(requestParams);
-
 		if (response.status >= 200 && response.status < 300) {
 			// If the response status is okay, parse JSON
-			console.log(response.json);
 			return response.json;
 		} else {
 			console.error(response.json);
