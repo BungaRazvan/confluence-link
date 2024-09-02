@@ -5,6 +5,7 @@ export interface ConfluenceLinkSettings {
 	confluenceDefaultSpaceId: string;
 	followLinks: boolean;
 	uploadTags: boolean;
+	favSpaces: string[];
 }
 
 export interface Config {
@@ -270,7 +271,7 @@ export type SearchResponse = {
 				_links: {};
 			};
 			space: {
-				id: number;
+				id: string;
 				key: string;
 				name: string;
 				icon: {

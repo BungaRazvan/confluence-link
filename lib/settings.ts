@@ -128,6 +128,7 @@ export class ConfluenceLinkSettingsTab extends PluginSettingTab {
 						});
 						new SpaceSearchModal(
 							this.app,
+							this.plugin,
 							client,
 							async (result) => {
 								this.plugin.settings.confluenceDefaultSpaceId =
