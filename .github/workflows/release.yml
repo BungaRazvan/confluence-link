@@ -3,7 +3,7 @@ name: Release Obsidian plugin
 on:
     push:
         branches:
-            - master
+            - CL-20
 
 jobs:
     check-tag:
@@ -56,22 +56,10 @@ jobs:
                   draft: false
                   prerelease: false
 
-            - name: Upload main.js
-              uses: actions/upload-release-asset@v1
+            - name: Upload Release Assets
+              if: ${{ steps.create_release.outputs.upload_url }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./main.js
-                  asset_name: main.js
-                  asset_content_type: application/javascript
-
-            - name: Upload manifest.json
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./manifest.json
-                  asset_name: manifest.json
-                  asset_content_type: application/json
+                  TAG_NAME: ${{ env.app_version }}
+              run: |
+                  gh release upload $TAG_NAME ./main.js ./manifest.json ./styles.css
