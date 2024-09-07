@@ -63,10 +63,10 @@ export default class ADFBuilder {
 		};
 	}
 
-	tableRowItem(cells: string[]): TableRowElement {
+	tableRowItem(cells: AdfElement[][]): TableRowElement {
 		const tableRow = {
 			type: "tableRow",
-			content: cells.map((cellText) => ({
+			content: cells.map((cell) => ({
 				type: "tableCell",
 				attrs: {
 					background: "",
@@ -74,17 +74,7 @@ export default class ADFBuilder {
 					colspan: 1,
 					rowspan: 1,
 				},
-				content: [
-					{
-						type: "paragraph",
-						content: [
-							{
-								type: "text",
-								text: cellText || "",
-							},
-						],
-					},
-				],
+				content: cell,
 			})),
 		};
 

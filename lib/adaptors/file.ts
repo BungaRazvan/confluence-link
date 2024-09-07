@@ -10,6 +10,7 @@ import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "./properties";
 import ParagraphDirector from "lib/directors/paragraph";
 import { ConfluenceLinkSettings } from "lib/confluence/types";
+import TableDirector from "lib/directors/table";
 
 export default class FileAdaptor {
 	constructor(
@@ -103,12 +104,32 @@ export default class FileAdaptor {
 				break;
 			case "TABLE":
 				const tableRows = Array.from(node.querySelectorAll("tr"));
-				const tableContent = tableRows.map((row) => {
-					const cells = Array.from(
-						row.querySelectorAll("td, th")
-					).map((cell) => cell.textContent!);
-					return builder.tableRowItem(cells);
-				});
+				const tableContent = await Promise.all(
+					tableRows.map(async (row) => {
+						const cells = await Promise.all(
+							Array.from(row.querySelectorAll("td, th")).map(
+								async (cell) => {
+									const cellAdf = new ADFBuilder();
+									const director = new TableDirector(
+										cellAdf,
+										this,
+										this.app,
+										this.client,
+										this.settings
+									);
+
+									await director.addItems(
+										cell as HTMLTableCellElement,
+										filePath
+									);
+
+									return cellAdf.build();
+								}
+							)
+						);
+						return builder.tableRowItem(cells);
+					})
+				);
 				builder.addItem(builder.tableItem(tableContent));
 				break;
 			case "PRE":

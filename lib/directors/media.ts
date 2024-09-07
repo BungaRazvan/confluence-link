@@ -82,6 +82,7 @@ class MediaDirector {
 			formData
 		);
 		const { extensions } = attachmentResponse!.results[0];
+
 		return this.builder.mediaSingleItem(
 			extensions.fileId,
 			extensions.collectionName

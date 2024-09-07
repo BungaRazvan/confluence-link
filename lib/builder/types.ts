@@ -78,7 +78,7 @@ export interface TableCellElement {
 		colspan: number;
 		rowspan: number;
 	};
-	content: ParagraphElement[];
+	content: any;
 }
 
 export interface TableRowElement {
