@@ -187,20 +187,10 @@ export default class ADFBuilder {
 		};
 	}
 
-	listItem(text: string): ListItemElement {
+	listItem(content: AdfElement[]): ListItemElement {
 		return {
 			type: "listItem",
-			content: [
-				{
-					type: "paragraph",
-					content: [
-						{
-							type: "text",
-							text: text.trim(),
-						},
-					],
-				},
-			],
+			content,
 		};
 	}
 

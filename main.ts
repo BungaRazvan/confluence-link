@@ -85,7 +85,8 @@ export default class ConfluenceLink extends Plugin {
 
 		try {
 			await callback();
-		} catch {
+		} catch (e) {
+			console.error(e);
 			statusBar.detach();
 			return;
 		}

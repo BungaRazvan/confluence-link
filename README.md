@@ -27,7 +27,7 @@ Welcome to the `Confluence Link` project. The objective of this project is to ma
 
 ![Commands](./images/commands.png)
 
-## Nice To Know
+## Nice to know
 
 While the spaces modal is opened you can mark or unmark spaces as favorites by clicking the star icon. This will make them appear as the first results the next time you open this modal.
 

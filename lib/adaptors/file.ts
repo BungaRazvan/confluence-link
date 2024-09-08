@@ -158,10 +158,20 @@ export default class FileAdaptor {
 				break;
 			case "OL":
 			case "UL":
-				let isTaskList = false;
-				const listItems = Array.from(node.querySelectorAll("li")).map(
-					(li) => {
-						isTaskList = li.classList.contains("task-list-item");
+				const isTaskList =
+					node.querySelectorAll("li").length ===
+					node.querySelectorAll('input[type="checkbox"]').length;
+
+				const listItems = await Promise.all(
+					Array.from(node.children).map(async (li) => {
+						const listAdf = new ADFBuilder();
+						const listDirector = new ParagraphDirector(
+							listAdf,
+							this,
+							this.app,
+							this.client,
+							this.settings
+						);
 
 						if (isTaskList) {
 							return builder.taskItem(
@@ -170,8 +180,15 @@ export default class FileAdaptor {
 							);
 						}
 
-						return builder.listItem(li.textContent!);
-					}
+						const p = createEl("p");
+						for (const child of Array.from(li.childNodes)) {
+							p.append(child);
+						}
+
+						await listDirector.addItems(p, filePath);
+
+						return builder.listItem(listAdf.build());
+					})
 				);
 
 				if (isTaskList) {
@@ -179,17 +196,20 @@ export default class FileAdaptor {
 						builder.taskListItem(listItems as TaskItemElement[])
 					);
 					break;
-				} else if (node.nodeName === "OL") {
+				}
+
+				if (node.nodeName == "OL") {
 					builder.addItem(
 						builder.orderedListItem(listItems as ListItemElement[])
 					);
 					break;
-				} else {
-					builder.addItem(
-						builder.bulletListItem(listItems as ListItemElement[])
-					);
-					break;
 				}
+
+				builder.addItem(
+					builder.bulletListItem(listItems as ListItemElement[])
+				);
+				break;
+
 			case "BLOCKQUOTE":
 				builder.addItem(builder.blockquoteItem(node.textContent!));
 				break;

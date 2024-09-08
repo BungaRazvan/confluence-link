@@ -180,7 +180,7 @@ export interface ADFNode {
 
 export type ListItemElement = {
 	type: "listItem";
-	content: ParagraphElement[];
+	content: AdfElement[];
 };
 
 export type AdfElement =

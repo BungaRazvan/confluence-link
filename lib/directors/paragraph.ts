@@ -20,7 +20,7 @@ class ParagraphDirector {
 	) {}
 
 	async addItems(
-		node: HTMLParagraphElement | HTMLTableCellElement,
+		node: HTMLParagraphElement,
 		filePath: string,
 		ignoreTags = false
 	): Promise<void> {
