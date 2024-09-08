@@ -10,6 +10,7 @@ import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "./properties";
 import ParagraphDirector from "lib/directors/paragraph";
 import { ConfluenceLinkSettings } from "lib/confluence/types";
+import TableDirector from "lib/directors/table";
 
 export default class FileAdaptor {
 	constructor(
@@ -103,12 +104,32 @@ export default class FileAdaptor {
 				break;
 			case "TABLE":
 				const tableRows = Array.from(node.querySelectorAll("tr"));
-				const tableContent = tableRows.map((row) => {
-					const cells = Array.from(
-						row.querySelectorAll("td, th")
-					).map((cell) => cell.textContent!);
-					return builder.tableRowItem(cells);
-				});
+				const tableContent = await Promise.all(
+					tableRows.map(async (row) => {
+						const cells = await Promise.all(
+							Array.from(row.querySelectorAll("td, th")).map(
+								async (cell) => {
+									const cellAdf = new ADFBuilder();
+									const director = new TableDirector(
+										cellAdf,
+										this,
+										this.app,
+										this.client,
+										this.settings
+									);
+
+									await director.addItems(
+										cell as HTMLTableCellElement,
+										filePath
+									);
+
+									return cellAdf.build();
+								}
+							)
+						);
+						return builder.tableRowItem(cells);
+					})
+				);
 				builder.addItem(builder.tableItem(tableContent));
 				break;
 			case "PRE":
@@ -137,10 +158,20 @@ export default class FileAdaptor {
 				break;
 			case "OL":
 			case "UL":
-				let isTaskList = false;
-				const listItems = Array.from(node.querySelectorAll("li")).map(
-					(li) => {
-						isTaskList = li.classList.contains("task-list-item");
+				const isTaskList =
+					node.querySelectorAll("li").length ===
+					node.querySelectorAll('input[type="checkbox"]').length;
+
+				const listItems = await Promise.all(
+					Array.from(node.children).map(async (li) => {
+						const listAdf = new ADFBuilder();
+						const listDirector = new ParagraphDirector(
+							listAdf,
+							this,
+							this.app,
+							this.client,
+							this.settings
+						);
 
 						if (isTaskList) {
 							return builder.taskItem(
@@ -149,8 +180,15 @@ export default class FileAdaptor {
 							);
 						}
 
-						return builder.listItem(li.textContent!);
-					}
+						const p = createEl("p");
+						for (const child of Array.from(li.childNodes)) {
+							p.append(child);
+						}
+
+						await listDirector.addItems(p, filePath);
+
+						return builder.listItem(listAdf.build());
+					})
 				);
 
 				if (isTaskList) {
@@ -158,17 +196,20 @@ export default class FileAdaptor {
 						builder.taskListItem(listItems as TaskItemElement[])
 					);
 					break;
-				} else if (node.nodeName === "OL") {
+				}
+
+				if (node.nodeName == "OL") {
 					builder.addItem(
 						builder.orderedListItem(listItems as ListItemElement[])
 					);
 					break;
-				} else {
-					builder.addItem(
-						builder.bulletListItem(listItems as ListItemElement[])
-					);
-					break;
 				}
+
+				builder.addItem(
+					builder.bulletListItem(listItems as ListItemElement[])
+				);
+				break;
+
 			case "BLOCKQUOTE":
 				builder.addItem(builder.blockquoteItem(node.textContent!));
 				break;

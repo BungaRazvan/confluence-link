@@ -12,18 +12,26 @@ import { ConfluenceLinkSettings } from "lib/confluence/types";
 
 class ParagraphDirector {
 	constructor(
-		private readonly builder: ADFBuilder,
-		private readonly fileAdaptor: FileAdaptor,
-		private readonly app: App,
-		private readonly client: ConfluenceClient,
-		private readonly settings: ConfluenceLinkSettings
+		readonly builder: ADFBuilder,
+		readonly fileAdaptor: FileAdaptor,
+		readonly app: App,
+		readonly client: ConfluenceClient,
+		readonly settings: ConfluenceLinkSettings
 	) {}
 
-	async addItems(node: HTMLParagraphElement, filePath: string) {
+	async addItems(
+		node: HTMLParagraphElement,
+		filePath: string,
+		ignoreTags = false
+	): Promise<void> {
 		const pItem = this.builder.paragraphItem();
 		const tags = node.querySelectorAll('a[class="tag"]');
 
-		if (tags.length > 0 && tags.length == node.children.length) {
+		if (
+			!ignoreTags &&
+			tags.length > 0 &&
+			tags.length == node.children.length
+		) {
 			new LabelDirector(this.app, this.client).addTags(
 				filePath,
 				this.settings.uploadTags,

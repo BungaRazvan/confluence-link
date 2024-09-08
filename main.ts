@@ -64,7 +64,7 @@ export default class ConfluenceLink extends Plugin {
 
 		statusBar.createEl("span", {
 			text: `Uploading ${filename}`,
-			attr: { style: "padding-rigth: 10px" },
+			attr: { style: "padding-rigth: 10px; padding-left: 5px" },
 		});
 		loader.animate(
 			[
@@ -85,7 +85,8 @@ export default class ConfluenceLink extends Plugin {
 
 		try {
 			await callback();
-		} catch {
+		} catch (e) {
+			console.error(e);
 			statusBar.detach();
 			return;
 		}

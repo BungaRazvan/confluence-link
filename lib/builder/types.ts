@@ -78,7 +78,7 @@ export interface TableCellElement {
 		colspan: number;
 		rowspan: number;
 	};
-	content: ParagraphElement[];
+	content: any;
 }
 
 export interface TableRowElement {
@@ -180,7 +180,7 @@ export interface ADFNode {
 
 export type ListItemElement = {
 	type: "listItem";
-	content: ParagraphElement[];
+	content: AdfElement[];
 };
 
 export type AdfElement =
