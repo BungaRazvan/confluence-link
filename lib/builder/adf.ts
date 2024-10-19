@@ -105,10 +105,10 @@ export default class ADFBuilder {
 		};
 	}
 
-	codeBlockItem(codeText: string): CodeBlockElement {
+	codeBlockItem(codeText: string, language: string = ""): CodeBlockElement {
 		return {
 			type: "codeBlock",
-			attrs: { language: "" },
+			attrs: { language },
 			content: [{ type: "text", text: codeText }],
 		};
 	}

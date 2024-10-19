@@ -10,8 +10,8 @@
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [],
-	"author": "",
-	"license": "MIT",
+	"author": "RazvanBunga",
+	"license": "UNLICENSED",
 	"devDependencies": {
 		"@types/js-yaml": "4.0.9",
 		"@types/lodash": "4.14.202",

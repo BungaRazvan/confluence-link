@@ -1,5 +1,11 @@
-import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
-
+import {
+	App,
+	Component,
+	loadMermaid,
+	MarkdownRenderer,
+	Notice,
+	TFile,
+} from "obsidian";
 import ADFBuilder from "lib/builder/adf";
 import {
 	AdfElement,
@@ -11,6 +17,7 @@ import PropertiesAdaptor from "./properties";
 import ParagraphDirector from "lib/directors/paragraph";
 import { ConfluenceLinkSettings } from "lib/confluence/types";
 import TableDirector from "lib/directors/table";
+import { MardownLgToConfluenceLgMap } from "lib/utils";
 
 export default class FileAdaptor {
 	constructor(
@@ -30,6 +37,7 @@ export default class FileAdaptor {
 			path,
 			new Component()
 		);
+		console.log(container);
 
 		const adf = await this.htmlToAdf(container, path);
 		return adf;
@@ -134,11 +142,33 @@ export default class FileAdaptor {
 				break;
 			case "PRE":
 				const codeElement = node.querySelector("code");
+				const mermaid = await loadMermaid();
+
+				if (
+					codeElement &&
+					codeElement.classList.contains("language-mermaid")
+				) {
+				}
+
 				if (
 					codeElement &&
 					!codeElement.classList.contains("language-yaml")
 				) {
 					const codeText = codeElement.textContent || "";
+					const lg = codeElement.getAttr("language");
+
+					if (
+						lg &&
+						Object.keys(MardownLgToConfluenceLgMap).includes(lg)
+					) {
+						builder.addItem(
+							builder.codeBlockItem(
+								codeText,
+								MardownLgToConfluenceLgMap[lg]
+							)
+						);
+						break;
+					}
 					builder.addItem(builder.codeBlockItem(codeText));
 				}
 				break;
