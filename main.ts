@@ -15,7 +15,6 @@ import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "lib/adaptors/properties";
 import FileAdaptor from "lib/adaptors/file";
 import SpaceSearchModal from "lib/modal";
-import { toBlob, toPng } from "html-to-image";
 import LabelDirector from "lib/directors/label";
 
 export default class ConfluenceLink extends Plugin {
