@@ -208,8 +208,13 @@ export default class ADFBuilder {
 		};
 	}
 
-	mediaItem(id: string, collection: string): MediaItemElement {
-		return {
+	mediaItem(
+		id: string,
+		collection: string,
+		width: number | null = null,
+		height: number | null = null
+	): MediaItemElement {
+		const media: MediaItemElement = {
 			type: "media",
 			attrs: {
 				type: "file",
@@ -217,16 +222,30 @@ export default class ADFBuilder {
 				collection,
 			},
 		};
+
+		if (width) {
+			media.attrs.width = width;
+			media.attrs.widthType = "pixel";
+		}
+
+		if (height) {
+			media.attrs.height = height;
+		}
+
+		console.log(media);
+		return media;
 	}
 
 	mediaSingleItem(
 		id: string,
 		collection: string,
-		layout: Layout = "center"
+		layout: Layout = "center",
+		width: number | null = null,
+		height: number | null = null
 	): MediaSingleItemElement {
 		return {
 			type: "mediaSingle",
-			content: [this.mediaItem(id, collection)],
+			content: [this.mediaItem(id, collection, width, height)],
 			attrs: {
 				layout,
 			},

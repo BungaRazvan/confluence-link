@@ -4,6 +4,7 @@ import ADFBuilder from "lib/builder/adf";
 import PropertiesAdaptor from "lib/adaptors/properties";
 import ConfluenceClient from "lib/confluence/client";
 import { toBlob, toPng } from "html-to-image";
+import { Layout } from "lib/builder/types";
 
 class MediaDirector {
 	constructor(
@@ -25,10 +26,9 @@ class MediaDirector {
 			return null;
 		}
 
-		const canvasEmbed = node.classList.contains("canvas-embed");
 		const src = node.getAttr("src")!;
-		// TODO figure out canvas
 
+		const canvasEmbed = node.classList.contains("canvas-embed");
 		const imageEmbed = node.classList.contains("image-embed");
 		const pdfEmbed = node.classList.contains("pdf-embed");
 		const videoEmbed = node.classList.contains("video-embed");
@@ -38,7 +38,13 @@ class MediaDirector {
 		const props = new PropertiesAdaptor().loadProperties(fileData);
 		const pageId = props.properties.pageId;
 
+		let width = null;
+		let height = null;
+		let layout: Layout = "center";
+
 		if (canvasEmbed) {
+			// TODO figure out canvas
+			return null;
 			const canvasFile = this.app.metadataCache.getFirstLinkpathDest(
 				src,
 				"."
@@ -88,6 +94,21 @@ class MediaDirector {
 				})
 			);
 		} else if (imageEmbed) {
+			const wrap = node.getAttr("alt");
+
+			width = node.getAttr("width")
+				? parseInt(node.getAttr("width")!)
+				: null;
+			height = node.getAttr("height")
+				? parseInt(node.getAttr("height")!)
+				: null;
+			layout =
+				wrap == "inL"
+					? "wrap-left"
+					: wrap == "inR"
+					? "wrap-right"
+					: "center";
+
 			const imgFile = this.app.metadataCache.getFirstLinkpathDest(
 				src,
 				"."
@@ -106,14 +127,21 @@ class MediaDirector {
 				)
 			);
 		} else if (pdfEmbed || videoEmbed) {
+			const fileSrc = src.split("#")[0];
 			const fileEmbed = this.app.metadataCache.getFirstLinkpathDest(
-				src,
+				fileSrc,
 				"."
 			);
 
 			if (!fileEmbed) {
 				console.error("not know path", node);
 				return null;
+			}
+
+			if (pdfEmbed) {
+				height = node.getAttr("height")
+					? parseInt(node.getAttr("height")!)
+					: null;
 			}
 
 			formData.append(
@@ -133,7 +161,10 @@ class MediaDirector {
 
 		return this.builder.mediaSingleItem(
 			extensions.fileId,
-			extensions.collectionName
+			extensions.collectionName,
+			layout,
+			width,
+			height
 		);
 	}
 }
