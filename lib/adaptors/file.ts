@@ -37,7 +37,6 @@ export default class FileAdaptor {
 			path,
 			new Component()
 		);
-		console.log(container);
 
 		const adf = await this.htmlToAdf(container, path);
 		return adf;

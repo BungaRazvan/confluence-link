@@ -107,3 +107,16 @@ export const MardownLgToConfluenceLgMap: {
 	xquery: "xquery",
 	yaml: "yaml",
 };
+
+export const wait = async (ms: number = 1000) => {
+	await new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+export const isRecentlyModified = (
+	mtime: number,
+	thresholdMs: number = 1000
+): boolean => {
+	const currentTime = Date.now();
+
+	return currentTime - mtime <= thresholdMs;
+};

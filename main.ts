@@ -16,6 +16,7 @@ import PropertiesAdaptor from "lib/adaptors/properties";
 import FileAdaptor from "lib/adaptors/file";
 import SpaceSearchModal from "lib/modal";
 import LabelDirector from "lib/directors/label";
+import { isRecentlyModified, wait } from "lib/utils";
 
 export default class ConfluenceLink extends Plugin {
 	settings: ConfluenceLinkSettings;
@@ -120,6 +121,13 @@ export default class ConfluenceLink extends Plugin {
 			throw new Error("Not a TFile");
 		}
 
+		// if the file was just modified
+		// wait to make sure all the changes are on disc
+		// before reading the files
+		if (isRecentlyModified(file.stat.mtime)) {
+			await wait();
+		}
+
 		const fileData = await this.app.vault.read(file);
 		const client = new ConfluenceClient({
 			host: confluenceDomain,
@@ -146,7 +154,7 @@ export default class ConfluenceLink extends Plugin {
 		if (!pageId) {
 			response = await client.page.createPage({
 				spaceId: spaceId as string,
-				pageTitle: file.name.replace(".md", ""),
+				pageTitle: file.basename,
 			});
 
 			propAdaptor.addProperties({
@@ -168,7 +176,7 @@ export default class ConfluenceLink extends Plugin {
 
 		client.page.updatePage({
 			pageId: propAdaptor.properties.pageId as string,
-			pageTitle: file.name.replace(".md", ""),
+			pageTitle: file.basename,
 			adf,
 		});
 
@@ -179,7 +187,7 @@ export default class ConfluenceLink extends Plugin {
 			);
 		}
 
-		new Notice(`File uploaded to confluence`);
+		new Notice(`${file.basename} uploaded to confluence`);
 	}
 
 	async onunload() {}

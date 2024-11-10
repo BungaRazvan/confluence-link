@@ -5,6 +5,7 @@ import PropertiesAdaptor from "lib/adaptors/properties";
 import ConfluenceClient from "lib/confluence/client";
 import { toBlob, toPng } from "html-to-image";
 import { Layout } from "lib/builder/types";
+import { wait } from "lib/utils";
 
 class MediaDirector {
 	constructor(
@@ -59,7 +60,7 @@ class MediaDirector {
 			// todo figure out how to open in bg
 			canvasLeaf.openFile(canvasFile, { active: false });
 
-			await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second to load the content
+			await wait();
 
 			const content = canvasLeaf.view.containerEl;
 
