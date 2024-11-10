@@ -7,10 +7,12 @@ import { isFloat } from "./utils";
 
 export class ConfluenceLinkSettingsTab extends PluginSettingTab {
 	plugin: ConfluenceLinkPlugin;
+	showToken: boolean;
 
 	constructor(app: App, plugin: ConfluenceLinkPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
+		this.showToken = false;
 	}
 
 	display() {
@@ -19,7 +21,7 @@ export class ConfluenceLinkSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Confluence domain")
-			.setDesc("Confluence domain eg: https://test.attlasian.net")
+			.setDesc("eg: https://test.attlasian.net")
 			.addText((text) =>
 				text
 					.setValue(this.plugin.settings.confluenceDomain)
@@ -43,13 +45,49 @@ export class ConfluenceLinkSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Atlassian api token")
-			.setDesc("Api token")
+			.setDesc(
+				createFragment((el) => {
+					el.appendChild(
+						createEl("a", {
+							text: "Official documentation",
+							href: "https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/",
+						})
+					);
+				})
+			)
+			.addExtraButton((button) =>
+				button
+					.setTooltip("Copy token")
+					.setIcon("copy")
+					.onClick(async () => {
+						if (this.plugin.settings.atlassianApiToken) {
+							await navigator.clipboard.writeText(
+								this.plugin.settings.atlassianApiToken
+							);
+							new Notice("Token copied");
+						}
+					})
+			)
+			.addExtraButton((button) =>
+				button
+					.setIcon(this.showToken ? "eye-off" : "eye")
+					.onClick(() => {
+						this.showToken = !this.showToken;
+						this.display();
+					})
+					.setTooltip(this.showToken ? "Hide token" : "Show token")
+			)
 			.addText((text) => {
 				text.setValue(this.plugin.settings.atlassianApiToken).onChange(
 					async (value) => {
 						this.plugin.settings.atlassianApiToken = value;
 						await this.plugin.saveSettings();
 					}
+				);
+
+				text.inputEl.setAttr(
+					"type",
+					this.showToken ? "text" : "password"
 				);
 			});
 
@@ -96,7 +134,7 @@ export class ConfluenceLinkSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Confluence default space")
-			.setDesc("Default spaceId to save the files")
+			.setDesc("Default spaceId to create the files")
 			.addExtraButton((button) => {
 				button
 					// .setIcon()

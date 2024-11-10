@@ -134,9 +134,12 @@ export interface MediaItemElement {
 		type: string;
 		id: string;
 		collection: string;
-		accessLevel?: "NONE" | "SITE" | "APPLICATION" | "CONRAINER";
+		accessLevel?: "NONE" | "SITE" | "APPLICATION" | "CONTAINER";
 		text?: string;
 		userType?: "DEFAULT" | "SPECIAL" | "APP";
+		width?: number;
+		height?: number;
+		widthType?: "pixel" | "percentage";
 	};
 }
 
@@ -153,8 +156,7 @@ export interface MediaSingleItemElement {
 	type: string;
 	content: [MediaItemElement];
 	attrs: {
-		layout: Layout;
-		widht?: number;
+		layout?: Layout;
 	};
 }
 

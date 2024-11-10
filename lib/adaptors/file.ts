@@ -1,5 +1,4 @@
 import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
-
 import ADFBuilder from "lib/builder/adf";
 import {
 	AdfElement,
@@ -11,6 +10,8 @@ import PropertiesAdaptor from "./properties";
 import ParagraphDirector from "lib/directors/paragraph";
 import { ConfluenceLinkSettings } from "lib/confluence/types";
 import TableDirector from "lib/directors/table";
+import { MardownLgToConfluenceLgMap } from "lib/utils";
+import { find } from "lodash";
 
 export default class FileAdaptor {
 	constructor(
@@ -134,13 +135,32 @@ export default class FileAdaptor {
 				break;
 			case "PRE":
 				const codeElement = node.querySelector("code");
-				if (
-					codeElement &&
-					!codeElement.classList.contains("language-yaml")
-				) {
-					const codeText = codeElement.textContent || "";
-					builder.addItem(builder.codeBlockItem(codeText));
+
+				// skip if pre is for file properties or no code element
+				if (node.classList.contains("frontmatter") || !codeElement) {
+					break;
 				}
+
+				if (codeElement.classList.contains("language-mermaid")) {
+					// todo figure out mermaid
+					break;
+				}
+
+				const codeText = codeElement.textContent || "";
+				const codeLg = find(
+					Array.from(codeElement.classList.values()),
+					(cls: string) => {
+						return cls.startsWith("language-");
+					}
+				);
+				const confluenceLg = codeLg
+					? MardownLgToConfluenceLgMap[
+							codeLg.replace("language-", "")
+					  ]
+					: "";
+
+				builder.addItem(builder.codeBlockItem(codeText, confluenceLg));
+
 				break;
 			case "P":
 				const paragraphDirector = new ParagraphDirector(
