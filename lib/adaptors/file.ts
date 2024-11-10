@@ -18,7 +18,7 @@ import ParagraphDirector from "lib/directors/paragraph";
 import { ConfluenceLinkSettings } from "lib/confluence/types";
 import TableDirector from "lib/directors/table";
 import { MardownLgToConfluenceLgMap } from "lib/utils";
-
+import { find } from "lodash";
 export default class FileAdaptor {
 	constructor(
 		private readonly app: App,
@@ -142,35 +142,32 @@ export default class FileAdaptor {
 				break;
 			case "PRE":
 				const codeElement = node.querySelector("code");
-				const mermaid = await loadMermaid();
 
-				if (
-					codeElement &&
-					codeElement.classList.contains("language-mermaid")
-				) {
+				// skip if pre is for file properties or no code element
+				if (node.classList.contains("frontmatter") || !codeElement) {
+					break;
 				}
 
-				if (
-					codeElement &&
-					!codeElement.classList.contains("language-yaml")
-				) {
-					const codeText = codeElement.textContent || "";
-					const lg = codeElement.getAttr("language");
+				if (codeElement.classList.contains("language-mermaid")) {
+					// todo figure out mermaid
+					break;
+				}
 
-					if (
-						lg &&
-						Object.keys(MardownLgToConfluenceLgMap).includes(lg)
-					) {
-						builder.addItem(
-							builder.codeBlockItem(
-								codeText,
-								MardownLgToConfluenceLgMap[lg]
-							)
-						);
-						break;
+				const codeText = codeElement.textContent || "";
+				const codeLg = find(
+					Array.from(codeElement.classList.values()),
+					(cls: string) => {
+						return cls.startsWith("language-");
 					}
-					builder.addItem(builder.codeBlockItem(codeText));
-				}
+				);
+				const confluenceLg = codeLg
+					? MardownLgToConfluenceLgMap[
+							codeLg.replace("language-", "")
+					  ]
+					: "";
+
+				builder.addItem(builder.codeBlockItem(codeText, confluenceLg));
+
 				break;
 			case "P":
 				const paragraphDirector = new ParagraphDirector(
