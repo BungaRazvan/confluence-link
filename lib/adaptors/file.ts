@@ -142,7 +142,7 @@ export default class FileAdaptor {
 				}
 
 				if (codeElement.classList.contains("language-mermaid")) {
-					// todo figure out mermaid
+					// TODO figure out mermaid
 					break;
 				}
 
