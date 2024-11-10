@@ -232,7 +232,6 @@ export default class ADFBuilder {
 			media.attrs.height = height;
 		}
 
-		console.log(media);
 		return media;
 	}
 

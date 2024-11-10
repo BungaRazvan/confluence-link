@@ -116,7 +116,5 @@ export const isRecentlyModified = (
 	mtime: number,
 	thresholdMs: number = 1000
 ): boolean => {
-	const currentTime = Date.now();
-
-	return currentTime - mtime <= thresholdMs;
+	return Date.now() - mtime <= thresholdMs;
 };

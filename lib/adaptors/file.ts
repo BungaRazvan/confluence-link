@@ -1,11 +1,4 @@
-import {
-	App,
-	Component,
-	loadMermaid,
-	MarkdownRenderer,
-	Notice,
-	TFile,
-} from "obsidian";
+import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
 import ADFBuilder from "lib/builder/adf";
 import {
 	AdfElement,
@@ -19,6 +12,7 @@ import { ConfluenceLinkSettings } from "lib/confluence/types";
 import TableDirector from "lib/directors/table";
 import { MardownLgToConfluenceLgMap } from "lib/utils";
 import { find } from "lodash";
+
 export default class FileAdaptor {
 	constructor(
 		private readonly app: App,

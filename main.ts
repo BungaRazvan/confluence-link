@@ -39,7 +39,7 @@ export default class ConfluenceLink extends Plugin {
 							ctx.file?.path || "",
 							confluenceDefaultSpaceId
 						),
-					ctx.file?.name!
+					ctx.file?.basename!
 				);
 			},
 		});
@@ -50,7 +50,7 @@ export default class ConfluenceLink extends Plugin {
 			editorCallback: (editor: Editor, ctx: MarkdownView) => {
 				this.addProgress(
 					async () => this.uploadFile(ctx.file?.path || "", null),
-					ctx.file?.name!
+					ctx.file?.basename!
 				);
 			},
 		});
@@ -87,8 +87,6 @@ export default class ConfluenceLink extends Plugin {
 			await callback();
 		} catch (e) {
 			console.error(e);
-			statusBar.detach();
-			return;
 		}
 
 		statusBar.detach();
@@ -187,7 +185,7 @@ export default class ConfluenceLink extends Plugin {
 			);
 		}
 
-		new Notice(`${file.basename} uploaded to confluence`);
+		new Notice(`${file.basename} file uploaded to confluence`);
 	}
 
 	async onunload() {}

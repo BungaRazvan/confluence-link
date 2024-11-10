@@ -1,9 +1,9 @@
-import { App, TFile, FileView } from "obsidian";
+import { App, TFile } from "obsidian";
 
 import ADFBuilder from "lib/builder/adf";
 import PropertiesAdaptor from "lib/adaptors/properties";
 import ConfluenceClient from "lib/confluence/client";
-import { toBlob, toPng } from "html-to-image";
+import { toBlob } from "html-to-image";
 import { Layout } from "lib/builder/types";
 import { wait } from "lib/utils";
 
@@ -137,12 +137,6 @@ class MediaDirector {
 			if (!fileEmbed) {
 				console.error("not know path", node);
 				return null;
-			}
-
-			if (pdfEmbed) {
-				height = node.getAttr("height")
-					? parseInt(node.getAttr("height")!)
-					: null;
 			}
 
 			formData.append(
