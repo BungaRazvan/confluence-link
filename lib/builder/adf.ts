@@ -292,4 +292,9 @@ export default class ADFBuilder {
 	build(): AdfElement[] {
 		return this.adf;
 	}
+
+	clear(): this {
+		this.adf = [];
+		return this;
+	}
 }
