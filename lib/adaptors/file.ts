@@ -1,10 +1,6 @@
 import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
 import ADFBuilder from "lib/builder/adf";
-import {
-	AdfElement,
-	ListItemElement,
-	TaskItemElement,
-} from "lib/builder/types";
+import { AdfElement } from "lib/builder/types";
 import ConfluenceClient from "lib/confluence/client";
 import PropertiesAdaptor from "./properties";
 import ParagraphDirector from "lib/directors/paragraph";
@@ -12,6 +8,7 @@ import { ConfluenceLinkSettings } from "lib/confluence/types";
 import TableDirector from "lib/directors/table";
 import { MardownLgToConfluenceLgMap } from "lib/utils";
 import { find } from "lodash";
+import ListDirector from "lib/directors/list";
 
 export default class FileAdaptor {
 	constructor(
@@ -31,7 +28,6 @@ export default class FileAdaptor {
 			path,
 			new Component()
 		);
-
 		const adf = await this.htmlToAdf(container, path);
 		return adf;
 	}
@@ -178,58 +174,20 @@ export default class FileAdaptor {
 				break;
 			case "OL":
 			case "UL":
-				const isTaskList =
-					node.querySelectorAll("li").length ===
-					node.querySelectorAll('input[type="checkbox"]').length;
-
-				const listItems = await Promise.all(
-					Array.from(node.children).map(async (li) => {
-						const listAdf = new ADFBuilder();
-						const listDirector = new ParagraphDirector(
-							listAdf,
-							this,
-							this.app,
-							this.client,
-							this.settings
-						);
-
-						if (isTaskList) {
-							return builder.taskItem(
-								li.textContent?.trim()!,
-								Boolean(li.getAttr("data-task"))
-							);
-						}
-
-						const p = createEl("p");
-						for (const child of Array.from(li.childNodes)) {
-							p.append(child);
-						}
-
-						await listDirector.addItems(p, filePath);
-
-						return builder.listItem(listAdf.build());
-					})
+				const listDirector = new ListDirector(
+					builder,
+					this,
+					this.app,
+					this.client,
+					this.settings
 				);
 
-				if (isTaskList) {
-					builder.addItem(
-						builder.taskListItem(listItems as TaskItemElement[])
-					);
-					break;
-				}
-
-				if (node.nodeName == "OL") {
-					builder.addItem(
-						builder.orderedListItem(listItems as ListItemElement[])
-					);
-					break;
-				}
-
-				builder.addItem(
-					builder.bulletListItem(listItems as ListItemElement[])
+				await listDirector.addList(
+					node as HTMLUListElement | HTMLOListElement,
+					filePath
 				);
+
 				break;
-
 			case "BLOCKQUOTE":
 				builder.addItem(builder.blockquoteItem(node.textContent!));
 				break;

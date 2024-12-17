@@ -114,6 +114,7 @@ class ParagraphDirector {
 				item = this.builder.underlineItem(node.textContent!);
 				break;
 			case "S":
+			case "DEL":
 				item = this.builder.strikeItem(node.textContent!);
 				break;
 		}

@@ -123,7 +123,7 @@ export default class ConfluenceLink extends Plugin {
 		// wait to make sure all the changes are on disc
 		// before reading the files
 		if (isRecentlyModified(file.stat.mtime)) {
-			await wait();
+			await wait(2000);
 		}
 
 		const fileData = await this.app.vault.read(file);
