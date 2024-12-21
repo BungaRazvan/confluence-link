@@ -136,8 +136,7 @@ export default class ConfluenceLink extends Plugin {
 		});
 
 		const propAdaptor = new PropertiesAdaptor().loadProperties(fileData);
-		const { pageId, tags } = propAdaptor.properties;
-
+		const { pageId } = propAdaptor.properties;
 		let response = null;
 
 		if (!spaceId && !pageId) {
@@ -170,20 +169,13 @@ export default class ConfluenceLink extends Plugin {
 			client,
 			spaceId as string,
 			this.settings
-		).convertObs2Adf(fileData, filePath || "");
+		).convertObs2Adf(fileData, filePath!, propAdaptor);
 
 		client.page.updatePage({
 			pageId: propAdaptor.properties.pageId as string,
 			pageTitle: file.basename,
 			adf,
 		});
-
-		if (tags) {
-			new LabelDirector(this.app, client).addTags(
-				filePath,
-				this.settings.uploadTags
-			);
-		}
 
 		new Notice(`${file.basename} file uploaded to confluence`);
 	}

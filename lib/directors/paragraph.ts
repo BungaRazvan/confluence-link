@@ -16,7 +16,8 @@ class ParagraphDirector {
 		readonly fileAdaptor: FileAdaptor,
 		readonly app: App,
 		readonly client: ConfluenceClient,
-		readonly settings: ConfluenceLinkSettings
+		readonly settings: ConfluenceLinkSettings,
+		readonly labelDirector: LabelDirector
 	) {}
 
 	async addItems(
@@ -25,23 +26,25 @@ class ParagraphDirector {
 		ignoreTags = false
 	): Promise<void> {
 		const pItem = this.builder.paragraphItem();
-		const tags = node.querySelectorAll('a[class="tag"]');
 
 		if (
 			!ignoreTags &&
-			tags.length > 0 &&
-			tags.length == node.children.length
+			this.settings.uploadTags &&
+			this.isTagOnlyParagraph(node)
 		) {
-			new LabelDirector(this.app, this.client).addTags(
-				filePath,
-				this.settings.uploadTags,
+			const tags = node.querySelectorAll('a[class="tag"]');
+			this.labelDirector.addTags(
 				tags as unknown as Array<HTMLAnchorElement>
 			);
+
 			return;
 		}
 
 		for (const innerNode of Array.from(node.childNodes)) {
-			if (innerNode.nodeType === Node.TEXT_NODE) {
+			if (
+				innerNode.nodeType === Node.TEXT_NODE ||
+				this.isTagNode(innerNode as HTMLElement)
+			) {
 				const textItem = this.builder.textItem(innerNode.textContent!);
 				pItem.content.push(textItem);
 				continue;
@@ -88,11 +91,23 @@ class ParagraphDirector {
 		this.builder.addItem(pItem);
 	}
 
+	isTagNode(node: HTMLElement): boolean {
+		return (
+			node.nodeType === Node.ELEMENT_NODE &&
+			node.nodeName === "A" &&
+			node.classList.contains("tag")
+		);
+	}
+
 	async findNestedItem(node: HTMLElement) {
 		let item: any = null;
 
 		switch (node.nodeName) {
 			case "A":
+				if (node.classList.contains("tag")) {
+					break;
+				}
+
 				item = await new LinkDirector(
 					this.builder,
 					this.fileAdaptor
@@ -175,6 +190,32 @@ class ParagraphDirector {
 		}
 
 		return marks;
+	}
+
+	isTagOnlyParagraph(node: HTMLElement): boolean {
+		const childNodes = Array.from(node.childNodes);
+
+		let hasText = false;
+		let hasTag = false;
+
+		for (const child of childNodes) {
+			if (
+				child.nodeType === Node.TEXT_NODE &&
+				child.textContent?.trim() !== ""
+			) {
+				hasText = true;
+			} else if (
+				child.nodeType === Node.ELEMENT_NODE &&
+				(child as HTMLElement).classList.contains("tag")
+			) {
+				hasTag = true;
+			} else if (child.nodeType === Node.ELEMENT_NODE) {
+				hasText = true; // If it's another type of element, count it as text content
+			}
+		}
+
+		// True if it contains only tags and no text content.
+		return hasTag && !hasText;
 	}
 }
 
