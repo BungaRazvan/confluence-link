@@ -48,7 +48,8 @@ class ListDirector extends ParagraphDirector {
 					this.fileAdaptor,
 					this.app,
 					this.client,
-					this.settings
+					this.settings,
+					this.labelDirector
 				);
 
 				if (isTaskList) {
