@@ -88,7 +88,7 @@ class ListDirector extends ParagraphDirector {
 					}
 				}
 
-				await paragraphDirector.addItems(p, filePath);
+				await paragraphDirector.addItems(p, filePath, true);
 				const listItem = this.builder.listItem(itemsAdfBuilder.build());
 
 				if (subList) {
