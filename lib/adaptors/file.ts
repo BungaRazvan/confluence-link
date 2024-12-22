@@ -1,4 +1,11 @@
-import { App, Component, MarkdownRenderer, Notice, TFile } from "obsidian";
+import {
+	App,
+	Component,
+	MarkdownRenderer,
+	Notice,
+	TFile,
+	loadMermaid,
+} from "obsidian";
 import ADFBuilder from "lib/builder/adf";
 import { AdfElement } from "lib/builder/types";
 import ConfluenceClient from "lib/confluence/client";
@@ -158,13 +165,63 @@ export default class FileAdaptor {
 				if (node.classList.contains("frontmatter") || !codeElement) {
 					break;
 				}
+				const codeText = codeElement.textContent || "";
 
 				if (codeElement.classList.contains("language-mermaid")) {
-					// TODO figure out mermaid
-					break;
+					const mermaid = await loadMermaid();
+					const file = this.app.vault.getAbstractFileByPath(filePath);
+
+					const fileData = await this.app.vault.read(file);
+					const propAdaptor = new PropertiesAdaptor().loadProperties(
+						fileData
+					);
+					const pageId = propAdaptor.properties.pageId as string;
+					const id =
+						"mermaid-" + Math.random().toString(36).substr(2, 9);
+
+					const { svg } = await mermaid.render(id, codeText);
+
+					const div = document.createElement("div");
+					div.innerHTML = svg;
+					const svgElement = div.firstElementChild as SVGElement;
+
+					svgElement.setAttribute("width", "1200");
+					svgElement.setAttribute("height", "800");
+
+					console.log("Generated SVG:", svg);
+					console.log("Diagram Code:", codeText);
+
+					const svgString =
+						'<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' +
+						new XMLSerializer().serializeToString(svgElement);
+
+					const svgBlob = new Blob([svgString], {
+						type: "image/svg+xml",
+					});
+					const formData = new FormData();
+					const filename = `mermaid-${Date.now()}.svg`;
+					formData.append(
+						"file",
+						new File([svgBlob], filename, { type: "image/svg+xml" })
+					);
+					// Upload SVG directly to Confluence
+					const attachmentResponse =
+						await this.client.attachement.uploadFile(
+							pageId,
+							formData
+						);
+					if (attachmentResponse?.results[0]?.extensions) {
+						builder.addItem(
+							builder.mediaSingleItem(
+								attachmentResponse.results[0].extensions.fileId,
+								"attachment",
+								"wide"
+							)
+						);
+						break;
+					}
 				}
 
-				const codeText = codeElement.textContent || "";
 				const codeLg = find(
 					Array.from(codeElement.classList.values()),
 					(cls: string) => {
