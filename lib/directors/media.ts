@@ -45,7 +45,54 @@ class MediaDirector {
 
 		if (canvasEmbed) {
 			// TODO figure out canvas
-			return null;
+			const canvasFile = this.app.metadataCache.getFirstLinkpathDest(
+				src,
+				"."
+			);
+
+			if (!canvasFile) {
+				console.error("not know path", node);
+				return null;
+			}
+
+			const canvasLeaf = this.app.workspace.getLeaf("window");
+			// todo figure out how to open in bg
+			canvasLeaf.openFile(canvasFile, { active: false });
+
+			await wait();
+
+			const content = canvasLeaf.view.containerEl;
+
+			const menu = content.querySelector(".canvas-card-menu");
+			const controls = content.querySelector(".canvas-controls");
+			const header = content.querySelector(".view-header");
+
+			if (menu) {
+				menu.remove();
+			}
+
+			if (controls) {
+				controls.remove();
+			}
+
+			if (header) {
+				header.remove();
+			}
+
+			const blob = await toBlob(content);
+
+			canvasLeaf.detach();
+
+			if (!blob) {
+				return null;
+			}
+
+			formData.append(
+				"file",
+				new File([blob], canvasFile.name, {
+					type: "image/png",
+				})
+			);
 		} else if (imageEmbed) {
 			const wrap = node.getAttr("alt");
 
