@@ -10,10 +10,6 @@ class LinkDirector {
 	async build_item(node: HTMLAnchorElement, followLinks: boolean) {
 		const classList = node.classList;
 
-		if (classList.contains("tag")) {
-			return null;
-		}
-
 		if (!followLinks) {
 			return null;
 		}

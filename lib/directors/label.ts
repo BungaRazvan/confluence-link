@@ -1,47 +1,32 @@
 import PropertiesAdaptor from "lib/adaptors/properties";
 import ConfluenceClient from "lib/confluence/client";
-import { isEmpty } from "lodash";
+import { cloneDeep, isEmpty } from "lodash";
 import { App, TFile } from "obsidian";
 
 export default class LabelDirector {
+	allTags: Array<string>;
+
 	constructor(
-		private readonly app: App,
-		private readonly client: ConfluenceClient
-	) {}
-
-	async addTags(
-		filePath: string,
-		uploadTags: boolean,
-		htmlTags: Array<HTMLAnchorElement> = []
+		private readonly client: ConfluenceClient,
+		private readonly propertiesAdaptor: PropertiesAdaptor
 	) {
-		if (!uploadTags) {
-			return null;
-		}
+		this.allTags = propertiesAdaptor.properties.tags
+			? cloneDeep(propertiesAdaptor.properties.tags)
+			: [];
+	}
 
-		const file = this.app.metadataCache.getFirstLinkpathDest(filePath, ".");
-
-		if (!(file instanceof TFile)) {
-			return null;
-		}
-
-		let allTags: Array<string> = [];
-		const fileData = await this.app.vault.read(file);
-		const propAdaptor = new PropertiesAdaptor().loadProperties(fileData);
-		const { pageId, tags } = propAdaptor.properties;
-
-		if (!isEmpty(tags)) {
-			allTags = tags!;
-		}
-
+	async addTags(htmlTags: Array<HTMLAnchorElement> = []) {
 		for (const tag of htmlTags) {
-			allTags.push(tag.textContent!);
+			if (!this.allTags.includes(tag.textContent!)) {
+				this.allTags.push(tag.textContent!);
+			}
 		}
+	}
 
-		if (allTags.length == 0) {
-			return null;
-		}
-
-		await this.client.label.addLabel(pageId!, allTags);
-		return;
+	async updateConfluencePage() {
+		await this.client.label.addLabel(
+			this.propertiesAdaptor.properties.pageId!,
+			this.allTags
+		);
 	}
 }

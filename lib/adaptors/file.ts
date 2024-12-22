@@ -9,6 +9,7 @@ import TableDirector from "lib/directors/table";
 import { MardownLgToConfluenceLgMap } from "lib/utils";
 import { find } from "lodash";
 import ListDirector from "lib/directors/list";
+import LabelDirector from "lib/directors/label";
 
 export default class FileAdaptor {
 	constructor(
@@ -18,7 +19,11 @@ export default class FileAdaptor {
 		private readonly settings: ConfluenceLinkSettings
 	) {}
 
-	async convertObs2Adf(text: string, path: string): Promise<AdfElement[]> {
+	async convertObs2Adf(
+		text: string,
+		path: string,
+		propertiesAdaptor: PropertiesAdaptor
+	): Promise<AdfElement[]> {
 		const container = document.createElement("div");
 
 		MarkdownRenderer.render(
@@ -28,18 +33,29 @@ export default class FileAdaptor {
 			path,
 			new Component()
 		);
-		const adf = await this.htmlToAdf(container, path);
+		const adf = await this.htmlToAdf(container, path, propertiesAdaptor);
 		return adf;
 	}
 
 	async htmlToAdf(
 		container: HTMLElement,
-		filePath: string
+		filePath: string,
+		propertiesAdaptor: PropertiesAdaptor
 	): Promise<AdfElement[]> {
 		const builder = new ADFBuilder();
+		const labelDirector = new LabelDirector(this.client, propertiesAdaptor);
 
 		for (const node of Array.from(container.childNodes)) {
-			await this.traverse(node as HTMLElement, builder, filePath);
+			await this.traverse(
+				node as HTMLElement,
+				builder,
+				filePath,
+				labelDirector
+			);
+		}
+
+		if (this.settings.uploadTags && labelDirector.allTags.length > 0) {
+			await labelDirector.updateConfluencePage();
 		}
 
 		return builder.build();
@@ -72,7 +88,7 @@ export default class FileAdaptor {
 		});
 		await this.app.vault.modify(file, propAdaptor.toFile(fileData));
 
-		const adf = await this.convertObs2Adf(fileData, path);
+		const adf = await this.convertObs2Adf(fileData, path, propAdaptor);
 
 		await this.client.page.updatePage({
 			pageId: propAdaptor.properties.pageId as string,
@@ -84,7 +100,12 @@ export default class FileAdaptor {
 		return confluenceUrl as string;
 	}
 
-	async traverse(node: HTMLElement, builder: ADFBuilder, filePath: string) {
+	async traverse(
+		node: HTMLElement,
+		builder: ADFBuilder,
+		filePath: string,
+		labelDirector: LabelDirector
+	) {
 		switch (node.nodeName) {
 			case "H1":
 			case "H2":
@@ -112,7 +133,8 @@ export default class FileAdaptor {
 										this,
 										this.app,
 										this.client,
-										this.settings
+										this.settings,
+										labelDirector
 									);
 
 									await director.addItems(
@@ -164,7 +186,8 @@ export default class FileAdaptor {
 					this,
 					this.app,
 					this.client,
-					this.settings
+					this.settings,
+					labelDirector
 				);
 				await paragraphDirector.addItems(
 					node as HTMLParagraphElement,
@@ -179,7 +202,8 @@ export default class FileAdaptor {
 					this,
 					this.app,
 					this.client,
-					this.settings
+					this.settings,
+					labelDirector
 				);
 
 				await listDirector.addList(
