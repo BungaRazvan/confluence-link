@@ -55,7 +55,8 @@ class ParagraphDirector {
 				innerNode.nodeName !== "SPAN"
 			) {
 				const nestedItem = await this.findNestedItem(
-					innerNode as HTMLElement
+					innerNode as HTMLElement,
+					filePath
 				);
 
 				if (nestedItem) {
@@ -99,7 +100,7 @@ class ParagraphDirector {
 		);
 	}
 
-	async findNestedItem(node: HTMLElement) {
+	async findNestedItem(node: HTMLElement, filePath: string) {
 		let item: any = null;
 
 		switch (node.nodeName) {
@@ -113,7 +114,8 @@ class ParagraphDirector {
 					this.fileAdaptor
 				).build_item(
 					node as HTMLAnchorElement,
-					this.settings.followLinks
+					this.settings.followLinks,
+					filePath
 				);
 				break;
 			case "STRONG":

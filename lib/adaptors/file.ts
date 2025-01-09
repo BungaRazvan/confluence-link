@@ -77,7 +77,7 @@ export default class FileAdaptor {
 
 		const response = await this.client.page.createPage({
 			spaceId: this.spaceId,
-			pageTitle: file.name,
+			pageTitle: file.basename,
 		});
 		confluenceUrl = response._links.base + response._links.webui;
 
@@ -92,11 +92,11 @@ export default class FileAdaptor {
 
 		await this.client.page.updatePage({
 			pageId: propAdaptor.properties.pageId as string,
-			pageTitle: file.name,
+			pageTitle: file.basename,
 			adf,
 		});
 
-		new Notice(`Page Created: ${file.name}`);
+		new Notice(`Page Created: ${file.basename}`);
 		return confluenceUrl as string;
 	}
 
