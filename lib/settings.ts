@@ -201,6 +201,38 @@ export class ConfluenceLinkSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
+			.setName("Confluence default parent page")
+			.setDesc("Optional parent page ID for newly created pages")
+			.addText((text) => {
+				let wait: number | null = null;
+
+				text.setPlaceholder("eg: 123456789")
+					.setValue(
+						this.plugin.settings.confluenceDefaultParentPageId || ""
+					)
+					.onChange(async (value) => {
+						const trimmedValue = value.trim();
+
+						if (!trimmedValue || /^\d+$/.test(trimmedValue)) {
+							this.plugin.settings.confluenceDefaultParentPageId =
+								trimmedValue;
+							await this.plugin.saveSettings();
+						} else {
+							if (wait) {
+								window.clearTimeout(wait);
+							}
+
+							wait = window.setTimeout(() => {
+								this.display();
+								new Notice(
+									"Please enter a valid parent page id."
+								);
+							}, 500);
+						}
+					});
+			});
+
+		new Setting(containerEl)
 			.setName("Follow links")
 			.setDesc(
 				"Enable to follow internal links and create those as confluence pages as well"
