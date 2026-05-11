@@ -78,6 +78,9 @@ export default class FileAdaptor {
 		const response = await this.client.page.createPage({
 			spaceId: this.spaceId,
 			pageTitle: file.basename,
+			parentId:
+				this.settings.confluenceDefaultParentPageId?.trim() ||
+				undefined,
 		});
 		confluenceUrl = response._links.base + response._links.webui;
 

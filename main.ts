@@ -18,6 +18,17 @@ import SpaceSearchModal from "lib/modal";
 import LabelDirector from "lib/directors/label";
 import { isRecentlyModified, wait } from "lib/utils";
 
+const DEFAULT_SETTINGS: ConfluenceLinkSettings = {
+	confluenceDomain: "",
+	atlassianUsername: "",
+	atlassianApiToken: "",
+	confluenceDefaultSpaceId: "",
+	confluenceDefaultParentPageId: "",
+	followLinks: false,
+	uploadTags: false,
+	favSpaces: [],
+};
+
 export default class ConfluenceLink extends Plugin {
 	settings: ConfluenceLinkSettings;
 
@@ -103,8 +114,12 @@ export default class ConfluenceLink extends Plugin {
 	}
 
 	async uploadFile(filePath: string, spaceId: string | null) {
-		const { atlassianUsername, atlassianApiToken, confluenceDomain } =
-			this.settings;
+		const {
+			atlassianUsername,
+			atlassianApiToken,
+			confluenceDomain,
+			confluenceDefaultParentPageId,
+		} = this.settings;
 
 		if (!atlassianApiToken || !atlassianUsername || !confluenceDomain) {
 			new Notice(
@@ -152,6 +167,7 @@ export default class ConfluenceLink extends Plugin {
 			response = await client.page.createPage({
 				spaceId: spaceId as string,
 				pageTitle: file.basename,
+				parentId: confluenceDefaultParentPageId?.trim() || undefined,
 			});
 
 			propAdaptor.addProperties({
@@ -183,7 +199,11 @@ export default class ConfluenceLink extends Plugin {
 	async onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign({ favSpaces: [] }, await this.loadData());
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
 	}
 
 	async saveSettings() {

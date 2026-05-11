@@ -3,6 +3,7 @@ export interface ConfluenceLinkSettings {
 	atlassianUsername: string;
 	atlassianApiToken: string;
 	confluenceDefaultSpaceId: string;
+	confluenceDefaultParentPageId: string;
 	followLinks: boolean;
 	uploadTags: boolean;
 	favSpaces: string[];

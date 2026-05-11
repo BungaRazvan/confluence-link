@@ -10,6 +10,7 @@ Welcome to the `Confluence Link` project. The objective of this project is to ma
 -   `Atlassian User Name`: Your Atlassian account's email address
 -   `Atlassian API Token`: Your Atlassian API token. You can generate one from your [Atlassian Account Settings](https://id.atlassian.com/manage-profile/security/api-tokens).
 -   (Optional) `Confluence Default Space`: The space identifier where all you confluence pages will be created
+-   (Optional) `Confluence Default Parent Page`: The parent page ID where newly created Confluence pages will be placed
 
 ![Settings](./images/settings_tab.png)
 
